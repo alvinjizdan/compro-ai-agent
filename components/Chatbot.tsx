@@ -1,142 +1,172 @@
-// File: components/ChatBot.tsx
-
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Bot, User } from 'lucide-react';
+import { getGeminiResponse } from '../services/geminiService';
 
-// ✅ PERUBAHAN DISINI:
-// Gunakan '..' untuk naik satu folder, lalu masuk ke 'services'
-import { getGeminiResponse } from '../services/geminiService'; 
-
-interface Message {
-  text: string;
-  isUser: boolean;
+interface ChatBotProps {
+  products: any[];
 }
 
-export const ChatBot = () => {
+const ChatBot: React.FC<ChatBotProps> = ({ products }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { text: "Halo! Selamat datang di PT Radhika. Ada yang bisa saya bantu terkait media tanam?", isUser: false }
-  ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const [history, setHistory] = useState([
+    {
+      role: 'model',
+      parts: 'Halo! 👋 Saya CS Virtual PT Radhika. Ada yang bisa saya bantu jelaskan tentang produk cocopeat kami?'
+    }
+  ]);
 
-  // Auto scroll ke bawah
-  useEffect(() => {
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(scrollToBottom, 100); // Sedikit delay agar render selesai baru scroll
+    }
+  }, [history, isOpen]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const userMsg = input;
-    setMessages(prev => [...prev, { text: userMsg, isUser: true }]);
-    setInput("");
+    const userMessage = { role: 'user', parts: input };
+    setHistory(prev => [...prev, userMessage]);
+    setInput('');
     setIsLoading(true);
 
-    // Panggil AI
-    const botReply = await getGeminiResponse(userMsg);
-
-    setMessages(prev => [...prev, { text: botReply, isUser: false }]);
-    setIsLoading(false);
+    try {
+      const replyText = await getGeminiResponse(history, input, products);
+      const botMessage = { role: 'model', parts: replyText };
+      setHistory(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error Gemini:", error);
+      setHistory(prev => [...prev, { role: 'model', parts: 'Maaf, koneksi sedang tidak stabil. Mohon coba lagi.' }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
- return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-sans">
+  return (
+    <div className="fixed bottom-6 right-6 z-[9999] font-sans flex flex-col items-end gap-4">
       
-      {/* ============================================================ */}
-      {/* JENDELA CHAT (Selalu di-render, tapi mainkan Opacity/Scale)  */}
-      {/* ============================================================ */}
+      {/* ==============================================
+          BAGIAN 1: JENDELA CHAT
+          Perbaikan: Tidak pakai 'hidden', tapi pakai pointer-events
+         ============================================== */}
       <div 
         className={`
-          bg-white w-full md:w-96 h-[450px] rounded-2xl shadow-2xl border border-slate-200 flex flex-col mb-4 overflow-hidden
-          transition-all duration-500 ease-out transform origin-bottom-right
+          w-[350px] h-[550px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col
+          transition-all duration-300 ease-out origin-bottom-right transform
           ${isOpen 
-            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto visible' 
-            : 'opacity-0 scale-90 translate-y-10 pointer-events-none invisible h-0 mb-0'}
+            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' // BUKA
+            : 'opacity-0 scale-95 translate-y-10 pointer-events-none h-0' // TUTUP (Pakai h-0 agar tidak makan tempat)
+          }
         `}
       >
-        
-        {/* Header Chat (Warna Hijau Anda) */}
-        <div className="bg-green-700 p-4 flex justify-between items-center text-white shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="bg-green-200 p-1.5 rounded-full">
-              <Bot className="text-green-700" size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-sm">CS Udin</h3>
-              <span className="flex items-center gap-1.5 w-fit mt-0.5 px-2 py-0.5 rounded-full bg-green-500/20 border border-green-200/50">
-                <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]"></span>
-                <span className="text-[10px] font-semibold text-green-400 uppercase tracking-wide">
-                  Online
-                </span>
-              </span>
-            </div>
-          </div>
-          <button onClick={() => setIsOpen(false)} className="hover:bg-slate-800 p-1 rounded transition">
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Isi Pesan (Background Hijau Muda Anda) */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-green-200">
-          {messages.map((msg, index) => (
-            <div key={index} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${
-                msg.isUser 
-                  ? 'bg-green-800 text-white rounded-tr-none' 
-                  : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none shadow-sm'
-              }`}>
-                {msg.text}
+          {/* HEADER */}
+          <div className="bg-gradient-to-r from-green-700 to-green-600 p-4 flex justify-between items-center text-white shadow-md z-10">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
+                <Bot size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">CS Udin (AI)</h3>
+                <div className="flex items-center gap-1.5 opacity-90">
+                  <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
+                  <span className="text-xs">Online</span>
+                </div>
               </div>
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-               <div className="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-none text-slate-500 text-xs italic shadow-sm">
-                  Sedang mengetik...
-               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            <button 
+              onClick={() => setIsOpen(false)} 
+              className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-full transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
-        {/* Input Area */}
-        <div className="p-3 bg-white border-t border-slate-100 flex gap-2 shrink-0">
-          <input 
-            type="text" 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Tulis pertanyaan..."
-            className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-          />
-          <button 
-            onClick={handleSend}
-            disabled={isLoading}
-            className="bg-orange-600 hover:bg-orange-700 text-white p-2.5 rounded-full transition disabled:bg-slate-300"
-          >
-            <Send size={18} />
-          </button>
-        </div>
+          {/* CHAT BODY */}
+          <div className="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4">
+            {history.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'model' && (
+                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-2 flex-shrink-0 border border-green-200">
+                    <Bot size={14} className="text-green-700" />
+                  </div>
+                )}
+                <div className={`max-w-[75%] p-3.5 text-sm shadow-sm ${
+                  msg.role === 'user' 
+                    ? 'bg-green-600 text-white rounded-2xl rounded-tr-none' 
+                    : 'bg-white text-slate-700 border border-slate-200 rounded-2xl rounded-tl-none'
+                }`}>
+                  <div className="whitespace-pre-wrap leading-relaxed">{msg.parts}</div>
+                </div>
+                {msg.role === 'user' && (
+                   <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center ml-2 flex-shrink-0">
+                    <User size={14} className="text-slate-500" />
+                  </div>
+                )}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-2 border border-green-200">
+                    <Bot size={14} className="text-green-700" />
+                 </div>
+                 <div className="bg-white border border-slate-200 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin text-green-600" />
+                    <span className="text-xs text-slate-500 italic">Sedang mengetik...</span>
+                 </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* INPUT AREA */}
+          <div className="p-4 bg-white border-t border-slate-100">
+            <div className="relative flex items-center gap-2">
+              <input 
+                type="text" 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="Tulis pesan Anda..."
+                className="flex-1 bg-slate-100 text-slate-800 text-sm rounded-full pl-5 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 border border-transparent focus:border-green-500 transition-all shadow-inner"
+              />
+              <button 
+                onClick={handleSend}
+                disabled={isLoading || !input.trim()}
+                className="absolute right-1.5 top-1.5 p-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 text-white rounded-full transition-all shadow-sm transform hover:scale-105"
+              >
+                <Send size={16} className={isLoading ? 'opacity-0' : 'opacity-100'} />
+              </button>
+            </div>
+          </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* TOMBOL LAUNCHER (Animasi Mengecil saat Chat Dibuka)          */}
-      {/* ============================================================ */}
+      {/* ==============================================
+          BAGIAN 2: TOMBOL UTAMA
+         ============================================== */}
       <button 
         onClick={() => setIsOpen(true)}
         className={`
-          bg-green-700 hover:bg-green-600 text-white p-4 rounded-full shadow-xl flex items-center gap-2 group
-          transition-all duration-300 ease-in-out transform
-          ${isOpen ? 'scale-0 opacity-0 pointer-events-none absolute' : 'scale-100 opacity-100 hover:scale-110'}
+          group flex items-center justify-center bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg 
+          transition-all duration-300 ease-in-out hover:pr-6 hover:pl-4
+          ${isOpen ? 'scale-0 opacity-0 absolute' : 'scale-100 opacity-100 relative'} 
         `}
       >
-        <MessageCircle size={28} />
-        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-in-out whitespace-nowrap font-bold text-sm">
-          Customer Service
+        <MessageCircle size={30} className="transition-transform duration-300 group-hover:rotate-12" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[100px] group-hover:ml-2 transition-[max-width,margin] duration-300 ease-in-out font-bold">
+            Chat CS
         </span>
       </button>
+
     </div>
   );
 };
+
+export default ChatBot;

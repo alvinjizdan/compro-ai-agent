@@ -1,14 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import * as XLSX from 'xlsx'; 
+import * as XLSX from 'xlsx';
 
-// Ganti dengan API Key Anda
 const API_KEY = "AIzaSyBwUweUP7ktEFcTxh8E5gnQk_Oe5q_KIQ0"; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// --- FUNGSI BANTU: BACA EXCEL DARI PUBLIC FOLDER ---
+// --- FUNGSI 1: BACA DATABASE EXCEL ---
 const loadExcelDatabase = async () => {
   try {
-    // 1. Fetch file dari folder public
+    // Mencari file di folder 'public'
     const response = await fetch('/database_produk.xlsx');
     
     // Cek jika file tidak ditemukan
@@ -30,67 +29,72 @@ const loadExcelDatabase = async () => {
     return JSON.stringify(jsonData, null, 2);
   } catch (error) {
     console.error("Gagal baca database Excel:", error);
-    return ""; // Kembalikan string kosong jika gagal
+    return ""; 
   }
 };
 
-// ==========================================
-// 1. FITUR CHATBOT (DENGAN MEMORI EXCEL)
-// ==========================================
-export const getGeminiResponse = async (userMessage: string) => {
+// --- FUNGSI 2: CHATBOT UTAMA ---
+export const getGeminiResponse = async (history: any[], message: string, webProducts: any[]) => {
   try {
+    // Gunakan model terbaru
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    // Baca data terbaru dari Excel setiap kali user bertanya
-    const productData = await loadExcelDatabase();
+    // A. PRIORITAS DATA: Coba baca Excel dulu
+    let productsContext = await loadExcelDatabase();
 
-    const SYSTEM_PROMPT = `
-    Kamu bernama udin, kamu adalah Customer Service (CS) Ramah dari PT Radhika Narya Daruna.
-    Tugasmu menjawab pertanyaan pelanggan berdasarkan DATA BASE PRODUK di bawah ini.
-    
-    === DATA BASE PRODUK (UPDATE TERBARU) ===
-    ${productData ? productData : "(Data produk sedang tidak tersedia, minta maaf ke user)"}
-    =========================================
+    // B. CADANGAN: Jika Excel gagal/kosong, pakai data dari Website (webProducts)
+    if (!productsContext) {
+      console.warn("Menggunakan data website (Excel tidak ditemukan/gagal).");
+      productsContext = (webProducts || []).map((p: any) => 
+        `- ${p.name}: Rp ${p.price?.toLocaleString('id-ID') || '0'} (${p.category || '-'})`
+      ).join("\n");
+    }
 
-    ATURAN PENTING:
+    // C. FILTER HISTORY (PENTING: Agar tidak Error Role)
+    const sanitizedHistory = history
+      .map(msg => {
+        let textContent = "";
+        if (typeof msg.parts === 'string') textContent = msg.parts;
+        else if (Array.isArray(msg.parts)) textContent = msg.parts[0]?.text || "";
+        else if (msg.parts?.text) textContent = msg.parts.text;
+
+        return {
+          role: msg.role,
+          parts: [{ text: textContent }] 
+        };
+      })
+      .filter((msg, index) => {
+        // Hapus sapaan awal bot
+        if (index === 0 && msg.role === 'model') return false; 
+        return true;
+      });
+
+    // D. MULAI CHAT
+    const chat = model.startChat({
+      history: sanitizedHistory,
+      generationConfig: { maxOutputTokens: 500 },
+    });
+
+    const systemPrompt = `
+      Kamu bernama udin, kamu adalah Customer Service (CS) Ramah dari PT Radhika Narya Daruna.
+      Tugasmu menjawab pertanyaan pelanggan berdasarkan DATA BASE PRODUK di bawah ini.
+
+      [SUMBER DATA UTAMA]
+      ${productsContext}
+
+      ATURAN PENTING:
     1. HANYA jawab berdasarkan data di atas. Jangan mengarang harga/stok sendiri.
     2. Jika Stok tertulis "Habis" atau "Kosong", katakan maaf dan tawarkan produk lain yang "Ada".
     3. Jika user bertanya hal di luar produk (misal: "Siapa Presiden Indonesia?"), jawab sopan bahwa kamu hanya melayani konsultasi media tanam.
-    4. Gaya bahasa: Sopan, Membantu, dan Menggunakan Emoji sesekali 🌱.
-    5. PENTING: JANGAN gunakan format Markdown seperti tanda bintang (** atau *). Gunakan teks biasa saja.
+    4. PENTING: JANGAN gunakan format Markdown seperti tanda bintang (** atau *). Gunakan teks biasa saja.
     `;
 
-    const prompt = `${SYSTEM_PROMPT}\n\nUser: "${userMessage}"\nCS:`;
-    
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    const result = await chat.sendMessage(`${systemPrompt}\n\nUser: ${message}`);
+    const response = await result.response;
+    return response.text();
 
-  } catch (error) {
-    console.error("Error Gemini Chat:", error);
-    return "Maaf kak, sistem kami sedang pembaruan data. Silakan hubungi WhatsApp admin ya 🙏";
-  }
-};
-
-// --- 2. Fungsi untuk UPSELL (Rekomendasi di Keranjang) ---
-// ✅ INI YANG HILANG TADI
-export const getUpsellSuggestion = async (cartItems: any[]) => {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    
-    // Ubah data cart jadi string biar AI bisa baca
-    const cartString = cartItems.map(item => item.name).join(", ");
-    
-    const prompt = `
-    Pelanggan sedang membeli: ${cartString}.
-    Sebagai pelayan restoran yang pintar, berikan 1 kalimat rekomendasi menu tambahan yang cocok (Upselling).
-    Contoh: "Wah, Nasi Goreng cocok banget ditambah Es Teh Manis lho kak!"
-    Langsung berikan kalimat rekomendasinya saja tanpa tanda kutip.
-    `;
-
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  } catch (error) {
-    console.error("Error Gemini Upsell:", error);
-    return "Cobain menu dessert kami juga yuk kak!";
+  } catch (error: any) {
+    console.error("❌ Error Gemini:", error);
+    return "Maaf, sedang ada gangguan koneksi database. Mohon coba lagi.";
   }
 };

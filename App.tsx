@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import ProductCard from './components/ProductCard';
 import { Search, ShoppingCart, Trash2, Plus, Minus, Coffee, Utensils, Sparkles, X, MapPin, Phone, Instagram, ArrowRight, Menu as MenuIcon, ChevronRight } from 'lucide-react';
 import { Product, CartItem, ReceiptData } from './types';
-import { ProductCard } from './components/ProductCard';
 import { ReceiptModal } from './components/ReceiptModal';
-import { getUpsellSuggestion } from './services/geminiService';
 import { User } from "lucide-react";
-import { ChatBot } from './components/Chatbot';
+import  ChatBot  from './components/Chatbot';
 import { LoginModal } from './components/LoginModal'; 
 import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react'; 
 
@@ -89,21 +88,77 @@ const App: React.FC = () => {
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
 
+  const handleCheckout = () => {
+
+    if (!isLoggedIn) {
+      alert("Silakan Login terlebih dahulu untuk menyelesaikan pesanan Anda.");
+      setShowLoginModal(true);
+      setIsCartOpen(false); 
+      return;
+    }
+    if (cart.length === 0) {
+      alert("Keranjang belanja Anda kosong.");
+      return;
+    }
+
+    const phoneNumber = "628886268884"; 
+
+    let message = `Halo Admin PT Radhika Narya Daruna,\n\n`;
+    message += `Saya *${username}* ingin memesan produk berikut:\n\n`;
+
+    cart.forEach((item, index) => {
+      const itemSubtotal = item.price * item.quantity;
+      message += `${index + 1}. *${item.name}*\n`;
+      message += `   Jumlah: ${item.quantity} pcs\n`;
+      message += `   Harga: Rp ${itemSubtotal.toLocaleString('id-ID')}\n\n`;
+    });
+
+    // ==========================================
+    // 🔥 PERBAIKAN RUMUS (Menambahkan Pajak)
+    // ==========================================
+    
+    // Hitung Subtotal (Total Harga Barang Saja)
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Hitung Pajak (10% dari Subtotal)
+    const tax = subtotal * 0.1;
+    
+    // Hitung Total Bayar (Subtotal + Pajak)
+    const totalPayment = subtotal + tax;
+
+    message += `--------------------------------\n`;
+    message += `Subtotal: Rp ${subtotal.toLocaleString('id-ID')}\n`;
+    message += `Pajak (10%): Rp ${tax.toLocaleString('id-ID')}\n`; // <-- Baris Pajak
+    message += `--------------------------------\n`;
+    message += `*TOTAL BAYAR: Rp ${totalPayment.toLocaleString('id-ID')}*\n`; // <-- Total sudah + Pajak
+    message += `--------------------------------\n\n`;
+    message += `Mohon info rekening pembayaran. Terima kasih.`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+  };
+  
   // Cart Functions
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
+      
       if (existing) {
+        // Kalau sudah ada, tambahkan quantity-nya
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      
+      // Kalau belum ada, masukkan baru dengan quantity inputan
+      return [...prev, { ...product, quantity: quantity }];
     });
+
     setAiSuggestion(null);
     setIsCartOpen(true);
   };
 
+  // 2. Fungsi Update Jumlah (+/- tombol kecil di cart) - KITA KEMBALIKAN
   const updateQuantity = (id: number, delta: number) => {
     setCart((prev) => {
       return prev
@@ -112,39 +167,24 @@ const App: React.FC = () => {
             return { ...item, quantity: item.quantity + delta };
           }
           return item;
-      })
-      .filter((item) => item.quantity > 0);
+        })
+        .filter((item) => item.quantity > 0);
     });
   };
 
+  // 3. Fungsi Hapus Item (Tombol Sampah) - KITA KEMBALIKAN
   const removeFromCart = (id: number) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // 4. Fungsi Kosongkan Cart - KITA KEMBALIKAN
   const clearCart = () => setCart([]);
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
-    const data: ReceiptData = {
-      items: cart,
-      subtotal,
-      tax,
-      total,
-      date: new Date().toLocaleString('id-ID'),
-      orderId: Math.random().toString(36).substr(2, 9).toUpperCase(),
-    };
-    setReceiptData(data);
-    setIsReceiptOpen(true);
-    setIsCartOpen(false);
-  };
-
+  // 5. Fungsi AI Suggestion - KITA KEMBALIKAN
   const handleAiSuggestion = async () => {
     if (cart.length === 0) return;
     setIsLoadingAi(true);
     const itemNames = cart.map(item => item.name);
-    const suggestion = await getUpsellSuggestion(itemNames);
-    setAiSuggestion(suggestion);
-    setIsLoadingAi(false);
   };
 
   const formatRupiah = (price: number) => {
@@ -288,17 +328,10 @@ const App: React.FC = () => {
   );
 
   const MenuSection = () => (
-    <section className="min-h-screen pt-32 pb-20 bg-stone-50 animate-in fade-in duration-500">
+    <section className="min-h-screen pt-24 pb-20 bg-stone-50 animate-in fade-in duration-500">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-serif font-bold text-slate-900 mb-4">Daftar Menu</h2>
-          <p className="text-slate-600 max-w-xl mx-auto">
-            Jelajahi berbagai hidangan lezat kami. Klik pada menu untuk menambahkan ke pesanan.
-          </p>
-        </div>
-
         {/* Filter & Search */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 sticky top-24 z-20">
+        <div className="w-fit flex flex-col md:flex-row justify-start items-center gap-6 mb-10 bg-white p-4 rounded-2xl shadow-sm border-2 border-slate-300 sticky top-24 z-20">
             <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
             {CATEGORIES.map((cat) => (
               <button
@@ -306,8 +339,8 @@ const App: React.FC = () => {
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? 'bg-orange-600 text-white shadow-md'
-                    : 'bg-stone-100 text-slate-600 hover:bg-stone-200'
+                    ? 'bg-orange-200 text-orange-600 shadow-md'
+                    : 'bg-stone-200 text-slate-600 hover:bg-stone-200'
                 }`}
               >
                 {cat}
@@ -771,35 +804,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
               ))}
-
-              {/* AI Upsell Feature */}
-              <div className="mt-6 pt-6 border-t border-dashed border-slate-200">
-                {!aiSuggestion ? (
-                  <button
-                    onClick={handleAiSuggestion}
-                    disabled={isLoadingAi}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 rounded-xl text-orange-700 text-xs font-semibold flex items-center justify-center gap-2 hover:shadow-md transition"
-                  >
-                    <Sparkles size={16} className={isLoadingAi ? "animate-spin" : "text-orange-500"} />
-                    {isLoadingAi ? "Chef AI sedang berpikir..." : "Rekomendasi Chef (AI)"}
-                  </button>
-                ) : (
-                  <div className="bg-slate-900 p-4 rounded-xl text-white shadow-xl relative animate-in fade-in slide-in-from-bottom-2">
-                     <div className="flex items-start gap-3">
-                        <div className="bg-white/10 p-2 rounded-full">
-                          <Sparkles size={16} className="text-yellow-400" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider font-bold">Rekomendasi Chef</p>
-                          <p className="text-sm font-medium leading-relaxed italic">"{aiSuggestion}"</p>
-                        </div>
-                        <button onClick={() => setAiSuggestion(null)} className="text-white/40 hover:text-white transition">
-                          <XIcon size={14} />
-                        </button>
-                     </div>
-                  </div>
-                )}
-              </div>
             </>
           )}
         </div>
@@ -821,12 +825,10 @@ const App: React.FC = () => {
             </div>
           </div>
           <button 
-            onClick={handleCheckout}
-            disabled={cart.length === 0}
-            className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition shadow-xl shadow-slate-200 active:scale-[0.98] flex justify-between px-8"
+          onClick={handleCheckout} // 👈 Tambahkan ini
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition-colors"
           >
-            <span>Konfirmasi Pesanan</span>
-            <ArrowRight size={20} />
+            Konfirmasi Pesanan
           </button>
         </div>
       </div>
@@ -846,7 +848,7 @@ const App: React.FC = () => {
         onClose={() => setShowLoginModal(false)}
         onLogin={handleLogin}
       />
-      <ChatBot 
+      <ChatBot products={filteredProducts}
       />
    </div>
 );
