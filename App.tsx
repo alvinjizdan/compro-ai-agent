@@ -700,13 +700,13 @@ const App: React.FC = () => {
       {/* Overlay */}
       {isCartOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-opacity"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] transition-opacity"
           onClick={() => setIsCartOpen(false)}
         />
       )}
       
       {/* Drawer Panel */}
-      <div className={`fixed inset-y-0 right-0 z-50 w-full md:w-[400px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed inset-y-0 right-0 z-50 w-full md:w-[400px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col z-[9999] ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
             <h2 className="text-xl font-bold font-serif text-slate-900">Pesanan Anda</h2>
