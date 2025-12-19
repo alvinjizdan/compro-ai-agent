@@ -1,0 +1,5 @@
+{
+  "name": "Nusantara POS",
+  "description": "A modern Point of Sales system for Indonesian SMEs featuring inventory management, real-time cart calculation, and AI-powered upsell suggestions.",
+  "requestFramePermissions": []
+}
