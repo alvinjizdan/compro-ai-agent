@@ -406,7 +406,7 @@ const App: React.FC = () => {
       {/* NAVBAR */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled || activePage !== 'home' ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
-          <button onClick={() => navigateTo('home')} className="flex items-center gap-2 group">
+          <button onClick={() => navigateTo('home')} className="flex items-center gap-2 group -ml-5">
   
  <button onClick={() => navigateTo('home')} className="flex items-center gap-2 group">
   {/* Gambar Logo */}
