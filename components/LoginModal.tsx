@@ -35,11 +35,11 @@ export const LoginModal = ({ isOpen, onClose, onLogin }: LoginModalProps) => {
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative items-center justify-center overflow-hidden">
         {/* Background Pattern Abstrak */}
         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-green-900/50 to-slate-900/90"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/100 to-green-900/20"></div>
         
         <div className="relative z-10 text-center p-12">
           <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10 inline-block mb-6">
-             <img src="/logobulet.png" alt="Logo" className="w-24 h-24 object-contain animate-pulse" />
+             <img src="/logobulet.png" alt="Logo" className="w-24 h-24 object-contain" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">PT Radhika Narya Daruna</h1>
           <p className="text-slate-300 text-lg max-w-md mx-auto leading-relaxed">
@@ -92,7 +92,7 @@ export const LoginModal = ({ isOpen, onClose, onLogin }: LoginModalProps) => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-bold text-slate-700">Password</label>
-                <a href="#" className="text-xs text-orange-600 hover:underline">Lupa password?</a>
+                <a href="#" className="text-xs text-blue-600 hover:underline">Lupa password?</a>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-orange-500 transition-colors" size={20} />
@@ -108,7 +108,7 @@ export const LoginModal = ({ isOpen, onClose, onLogin }: LoginModalProps) => {
 
             <button 
               type="submit" 
-              className="w-full bg-slate-900 hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-orange-500/30 active:scale-95 flex items-center justify-center gap-2"
+              className="w-full bg-blue-700 hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-orange-500/30 active:scale-95 flex items-center justify-center gap-2"
             >
               <LogIn size={20} />
               Masuk Sekarang
