@@ -1,7 +1,7 @@
 export interface Product {
   id: number;
   name: string;
-  category: 'Makanan' | 'Minuman' | 'Camilan';
+  category: 'Bahan Baku' | 'Kopra' | 'Kelapa Utuh';
   price: number;
   image: string;
 }

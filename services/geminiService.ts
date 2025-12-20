@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 const API_KEY = "AIzaSyBwUweUP7ktEFcTxh8E5gnQk_Oe5q_KIQ0"; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// --- FUNGSI 1: BACA DATABASE EXCEL ---
+// FUNGSI 1: BACA DATABASE EXCEL
 const loadExcelDatabase = async () => {
   try {
     // Mencari file di folder 'public'
@@ -33,7 +33,7 @@ const loadExcelDatabase = async () => {
   }
 };
 
-// --- FUNGSI 2: CHATBOT UTAMA ---
+// FUNGSI 2: CHATBOT UTAMA
 export const getGeminiResponse = async (history: any[], message: string, webProducts: any[]) => {
   try {
     // Gunakan model terbaru

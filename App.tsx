@@ -11,12 +11,13 @@ import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 
 // Mock Data
 const MOCK_PRODUCTS: Product[] = [
-  { id: 1, name: "Nasi Goreng Spesial", category: "Makanan", price: 25000, image: "https://picsum.photos/seed/nasi/400/300" },
-  { id: 2, name: "Es Teh Manis", category: "Minuman", price: 5000, image: "https://picsum.photos/seed/esteh/400/300" },
-  { id: 3, name: "Kentang Goreng", category: "Camilan", price: 15000, image: "https://picsum.photos/seed/kentang/400/300" },
+  { id: 1, name: "Kelapa Cungkil", category: "Bahan Baku", price: 11000, image: "/kelapacungkil.jpg" },
+  { id: 2, name: "Kopra Asongan", category: "Kopra", price: 12000, image: "/kopraasongan.png" },
+  { id: 3, name: "Kopra Regular", category: "Kopra", price: 13000, image: "/kopraregular.jpg" },
+  { id: 4, name: "Buah Kelapa", category: "Kelapa Utuh", price: 14000, image: "/kelapabuah.jpg" },
 ];
 
-const CATEGORIES = ["Semua", "Makanan", "Minuman", "Camilan"];
+const CATEGORIES = ["Semua", "Bahan Baku", "Kopra", "Kelapa Utuh"];
 
 type Page = 'home' | 'about' | 'menu' | 'location';
 
@@ -212,14 +213,14 @@ const App: React.FC = () => {
       </div>
       <div className="container mx-auto px-6 relative z-10 text-center text-white pt-24 md:pt-16">
         <span className="inline-block py-1 px-3 rounded-full bg-green-500/20 border border-green-400/50 text-green-100 text-sm font-semibold tracking-wider mb-6 backdrop-blur-sm animate-in slide-in-from-bottom-4 duration-700">
-          MEDIA TANAM KUALITAS PREMIUM
+          KOPRA KUALITAS PREMIUM
         </span>
         <h1 className="text-5xl md:text-6xl font-bold font-serif mb-6 mt-4 leading-tight animate-in slide-in-from-bottom-6 duration-1000">
-          Tumbuh Lebih Cepat <br/>
-          <span className="text-white-400">Dengan Media Tanam Kualitas Ekspor</span>
+          Pasokan Terjaga<br/>
+          <span className="text-white-400">Bisnis Anda Tetap Menyala.</span>
         </h1>
         <p className="text-lg md:text-xl text-slate-200 max-w-3xl mx-auto mb-10 mt-9 leading-relaxed animate-in slide-in-from-bottom-8 duration-1000 delay-200">
-          Jangan biarkan media tanam yang buruk menghambat omset panen Anda. Dapatkan standarisasi kualitas bersama PT Radhika Narya Daruna.
+          Jangan biarkan gudang kosong menghambat cuan. PT Radhika Narya Daruna siap menjadi mitra suplai kopra rutin dengan tonase yang bisa diandalkan.
         </p>
         <div className="flex flex-col md:flex-row gap-4 justify-center animate-in zoom-in-95 duration-1000 delay-300">
           <button 
@@ -245,24 +246,34 @@ const App: React.FC = () => {
     <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-24'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
-           <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Cerita Kami</h2>
-           <h3 className="text-4xl md:text-3xl font-serif font-bold text-slate-900">Di Balik PT Radhika Narya Daruna</h3>
+           <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Tentang Kami</h2>
+           <h3 className="text-4xl md:text-3xl font-serif font-bold text-slate-900">Dedikasi untuk Kualitas Komoditas Indonesia.</h3>
         </div>
 
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1 relative">
-            <div className="absolute -top-4 -left-4 w-24 h-24 bg-orange-100 rounded-full z-0"></div>
+            <img
+              src="/kelapakartun.png"
+              alt="Dekorasi sudut"
+              className="absolute -top-10 -left-10 w-40 h-40 z-30 object-contain pointer-events-none -rotate-12"
+/>
             <div className="grid grid-cols-2 gap-4 relative z-10">
               <img src="/tentangkami1.jpg" className="rounded-2xl w-full h-80 object-cover shadow-xl transform translate-y-8" alt="2" />
               <img src="/tentangkami2.jpg" className="rounded-2xl w-full h-80 object-cover shadow-xl" alt="1" />
             </div>
           </div>
+
+          
           
           <div className="flex-1">
-            <h3 className="text-3xl font-serif font-bold text-slate-900 mb-6">Solusi Media Tanam Berkualitas, Kini Hadir Dalam Genggaman Anda</h3>
+            <h3 className="text-3xl font-serif font-bold text-slate-900 mb-6">Kenapa Bermitra dengan PT Radhika Narya Daruna?</h3>
             <p className="text-slate-600 leading-relaxed mb-6 text-lg">
-              PT. Radhika Narya Daruna adalah perusahaan retail modern yang berkomitmen untuk menghadirkan transparansi dan kemudahan akses informasi bagi publik. Melalui platform digital ini, kami memperkuat identitas perusahaan dan menyajikan portofolio produk secara profesional, guna membangun kredibilitas serta kepercayaan di mata pelanggan dan mitra bisnis kami.
+              Di PT Radhika Narya Daruna, kami memahami bahwa konsistensi adalah kunci bisnis Anda. 
+              Kami bukan sekadar penjual, melainkan mitra rantai pasok yang berkomitmen menjaga ketersediaan stok 
+              (availability) dan kestabilan kualitas.
+              kami memastikan setiap kilogram Kopra dan produk kelapa yang Anda terima memiliki spesifikasi yang tepat untuk efisiensi produksi Anda.
             </p>
+            
             
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -271,9 +282,9 @@ const App: React.FC = () => {
                 <Sparkles size={24} />
                </div>
               <div>
-                <h4 className="font-bold text-slate-900 mb-1">Bahan Baku Premium</h4>
+                <h4 className="font-bold text-slate-900 mb-1">Sortir Grade Transparan</h4>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                Diproduksi dari coconut coir pith berkualitas tinggi yang telah melalui proses washing (pencucian) ketat.
+                Kami memisahkan Kopra Regular (Mill Grade) dan Asongan secara tegas, sehingga Anda mendapatkan kualitas sesuai harga yang Anda bayar.
                 </p>
               </div>
              </div>
@@ -282,9 +293,9 @@ const App: React.FC = () => {
                 <Sparkles size={24} />
                </div>
               <div>
-                <h4 className="font-bold text-slate-900 mb-1">Media Tanam Premium</h4>
+                <h4 className="font-bold text-slate-900 mb-1">Kopra Premium</h4>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                Media tanam 100% organik yang menawarkan aerasi akar yang optimal dan stabilitas pH yang netral.
+                Kami melakukan quality control ketat untuk memastikan kadar air (moisture content) sesuai standar, meminimalisir risiko susut dan jamur saat pengiriman.
                 </p>
               </div>
              </div>
@@ -297,7 +308,7 @@ const App: React.FC = () => {
 
   // New component specifically for Home page preview
   const HomeFavoritesSection = () => (
-    <section className="py-7 bg-stone-50">
+    <section className="py-2 bg-stone-50">
       <div className="container mx-auto px-6">
         <div className="text-center mb-10">
           <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Daftar Produk</h2>
@@ -312,16 +323,6 @@ const App: React.FC = () => {
           {MOCK_PRODUCTS.slice(0, 4).map((product) => (
             <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
           ))}
-        </div>
-
-        <div className="text-center">
-          <button 
-            onClick={() => navigateTo('menu')}
-            className="inline-flex items-center gap-2 bg-green-700 hover:bg-slate-800 text-white font-bold py-4 px-10 rounded-full transition shadow-lg hover:shadow-xl"
-          >
-            Lihat Semua Produk
-            <ArrowRight size={25}/>
-          </button>
         </div>
       </div>
     </section>
@@ -368,7 +369,7 @@ const App: React.FC = () => {
 
   // Added isStandalone prop
   const LocationSection = ({ isStandalone = false }: { isStandalone?: boolean }) => (
-    <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-24'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
+    <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-8'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
        <div className="container mx-auto px-6">
           <div className="text-center mb-8">
             <h2 className="text-4xl font-serif font-bold text-slate-900 mb-4">Kunjungi Kami</h2>
@@ -413,19 +414,28 @@ const App: React.FC = () => {
                 </div>
              </div>
 
-             <div className="h-[500px] bg-slate-200 rounded-3xl overflow-hidden shadow-lg relative group">
-                {/* Simulated Map */}
-                <img 
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop" 
-                  alt="Map Location" 
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-500"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
-                      <MapPin className="text-red-700" size={24}/>
-                      <span className="font-bold text-slate-900">Lokasi Kami</span>
-                   </div>
-                </div>
+             {/* --- AWAL BAGIAN PETA --- */}
+              <div className="h-[500px] bg-slate-200 rounded-3xl overflow-hidden shadow-lg relative group">
+  
+  {/* Gambar Peta Background */}
+  <img 
+    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop" 
+    alt="Map Location" 
+    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-500"
+  />
+
+  {/* Overlay Tombol (Sekarang sudah jadi Link) */}
+  <div className="absolute inset-0 flex items-center justify-center">
+    <a 
+      href="https://maps.app.goo.gl/7rHLRKXXzssGwuYS7" 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce hover:bg-slate-50 transition-colors cursor-pointer text-slate-900"
+    >
+      <MapPin className="text-red-600" size={24}/>
+      <span className="font-bold">Lokasi Kami</span>
+    </a>
+              </div>
              </div>
           </div>
        </div>

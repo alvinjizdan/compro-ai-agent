@@ -51,7 +51,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ products }) => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] font-sans flex flex-col items-end gap-4">
+    <div className="fixed bottom-6 right-6 z-[60] font-sans flex flex-col items-end gap-4">
       
       {/* ==============================================
           BAGIAN 1: JENDELA CHAT
