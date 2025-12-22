@@ -1,214 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import axios from 'axios'; // ✅ IMPORT AXIOS
 import ProductCard from './components/ProductCard';
-import { Search, ShoppingCart, Trash2, Plus, Minus, Coffee, Utensils, Sparkles, X, MapPin, Phone, Instagram, ArrowRight, Menu as MenuIcon, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, Plus, Minus, Sparkles, X, MapPin, Phone, ArrowRight, Menu as MenuIcon, ChevronRight, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { Product, CartItem, ReceiptData } from './types';
-import { ReceiptModal } from './components/ReceiptModal';
-import { User } from "lucide-react";
-import  ChatBot  from './components/Chatbot';
-import { LoginModal } from './components/LoginModal'; 
-import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react'; 
+import ChatBot from './components/Chatbot';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import Login from './src/pages/Login.tsx';
+import AdminDashboard from './src/pages/AdminDashboard.tsx';
 
-
-// Mock Data
-const MOCK_PRODUCTS: Product[] = [
-  { id: 1, name: "Kelapa Cungkil", category: "Bahan Baku", price: 11000, image: "/kelapacungkil.jpg" },
-  { id: 2, name: "Kopra Asongan", category: "Kopra", price: 12000, image: "/kopraasongan.png" },
-  { id: 3, name: "Kopra Regular", category: "Kopra", price: 13000, image: "/kopraregular.jpg" },
-  { id: 4, name: "Buah Kelapa", category: "Kelapa Utuh", price: 14000, image: "/kelapabuah.jpg" },
-];
-
+// Kategori Tetap Statis
 const CATEGORIES = ["Semua", "Bahan Baku", "Kopra", "Kelapa Utuh"];
 
-type Page = 'home' | 'about' | 'menu' | 'location';
-
-const App: React.FC = () => {
-  // Navigation State
-  const [activePage, setActivePage] = useState<Page>('home');
-  
-  // Cart & POS Data
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Semua");
-  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
-  
-  // Login
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [username, setUsername] = useState("");
-
-  const handleLogin = (user: string) => {
-    setIsLoggedIn(true);
-    setUsername(user);
-    setShowLoginModal(false); 
-  };
-
-  const handleLogout = () => {
-
-    setIsLoggedIn(false);
-    setUsername("");
-    setShowProfileMenu(false);
-    setShowLoginModal(true);
-    // navigateTo('home'); 
-  };
-  
-  // UI States
-  
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  
-  // AI Suggestion State
-  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState(false);
-
-  // Handle Scroll for Navbar styling
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Filter Logic
-  const filteredProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === "Semua" || product.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, selectedCategory]);
-  const searchPreviewItems = useMemo(() => {
-    if (searchQuery.length === 0) return [];
-    return MOCK_PRODUCTS.filter((p) => 
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 5);
-  }, [searchQuery]);
-
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax;
-
-  const handleCheckout = () => {
-
-    if (!isLoggedIn) {
-      alert("Silakan Login terlebih dahulu untuk menyelesaikan pesanan Anda.");
-      setShowLoginModal(true);
-      setIsCartOpen(false); 
-      return;
-    }
-    if (cart.length === 0) {
-      alert("Keranjang belanja Anda kosong.");
-      return;
-    }
-
-    const phoneNumber = "628886268884"; 
-
-    let message = `Halo Admin PT Radhika Narya Daruna,\n\n`;
-    message += `Saya *${username}* ingin memesan produk berikut:\n\n`;
-
-    cart.forEach((item, index) => {
-      const itemSubtotal = item.price * item.quantity;
-      message += `${index + 1}. *${item.name}*\n`;
-      message += `   Jumlah: ${item.quantity} pcs\n`;
-      message += `   Harga: Rp ${itemSubtotal.toLocaleString('id-ID')}\n\n`;
-    });
-
-    // ==========================================
-    // 🔥 PERBAIKAN RUMUS (Menambahkan Pajak)
-    // ==========================================
-    
-    // Hitung Subtotal (Total Harga Barang Saja)
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Hitung Pajak (10% dari Subtotal)
-    const tax = subtotal * 0.1;
-    
-    // Hitung Total Bayar (Subtotal + Pajak)
-    const totalPayment = subtotal + tax;
-
-    message += `--------------------------------\n`;
-    message += `Subtotal: Rp ${subtotal.toLocaleString('id-ID')}\n`;
-    message += `Pajak (10%): Rp ${tax.toLocaleString('id-ID')}\n`; // <-- Baris Pajak
-    message += `--------------------------------\n`;
-    message += `*TOTAL BAYAR: Rp ${totalPayment.toLocaleString('id-ID')}*\n`; // <-- Total sudah + Pajak
-    message += `--------------------------------\n\n`;
-    message += `Mohon info rekening pembayaran. Terima kasih.`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
-  };
-  
-  // Cart Functions
-  const addToCart = (product: Product, quantity: number) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      
-      if (existing) {
-        // Kalau sudah ada, tambahkan quantity-nya
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
-        );
-      }
-      
-      // Kalau belum ada, masukkan baru dengan quantity inputan
-      return [...prev, { ...product, quantity: quantity }];
-    });
-
-    setAiSuggestion(null);
-    setIsCartOpen(true);
-  };
-
-  // 2. Fungsi Update Jumlah (+/- tombol kecil di cart) - KITA KEMBALIKAN
-  const updateQuantity = (id: number, delta: number) => {
-    setCart((prev) => {
-      return prev
-        .map((item) => {
-          if (item.id === id) {
-            return { ...item, quantity: item.quantity + delta };
-          }
-          return item;
-        })
-        .filter((item) => item.quantity > 0);
-    });
-  };
-
-  // 3. Fungsi Hapus Item (Tombol Sampah) - KITA KEMBALIKAN
-  const removeFromCart = (id: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  // 4. Fungsi Kosongkan Cart - KITA KEMBALIKAN
-  const clearCart = () => setCart([]);
-
-  // 5. Fungsi AI Suggestion - KITA KEMBALIKAN
-  const handleAiSuggestion = async () => {
-    if (cart.length === 0) return;
-    setIsLoadingAi(true);
-    const itemNames = cart.map(item => item.name);
-  };
-
-  const formatRupiah = (price: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
-  };
-
-  // Function to change page
-  const navigateTo = (page: Page) => {
-    setActivePage(page);
-    setIsMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // --- SUB-COMPONENTS FOR PAGES ---
-
-  const HeroSection = () => (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden animate-in fade-in duration-500 pb-16">
+// =================================================================
+// 1. KOMPONEN HOME (Terima props 'products')
+// =================================================================
+const HomePage = ({ navigateTo, products, addToCart }: { navigateTo: (path: string) => void, products: Product[], addToCart: any }) => (
+  <>
+    {/* Hero Section */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pb-16">
       <div className="absolute inset-0 z-0">
-        <img 
-          src="/bannerbg.png" 
-          alt="Banner" 
-          className="w-full h-full object-cover"
-        />
+        <div className="absolute inset-0 bg-slate-900/50"></div> 
+        <img src="/bannerbg.png" alt="Banner" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
       </div>
       <div className="container mx-auto px-6 relative z-10 text-center text-white pt-24 md:pt-16">
@@ -223,112 +35,94 @@ const App: React.FC = () => {
           Jangan biarkan gudang kosong menghambat cuan. PT Radhika Narya Daruna siap menjadi mitra suplai kopra rutin dengan tonase yang bisa diandalkan.
         </p>
         <div className="flex flex-col md:flex-row gap-4 justify-center animate-in zoom-in-95 duration-1000 delay-300">
-          <button 
-            onClick={() => navigateTo('menu')}
-            className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-full transition flex items-center justify-center gap-2 group"
-          >
-            Pesan Sekarang 
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          <button onClick={() => navigateTo('/menu')} className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-full transition flex items-center justify-center gap-2 group">
+            Pesan Sekarang <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </button>
-          <button 
-            onClick={() => navigateTo('about')}
-            className="bg-green-600/30 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold py-4 px-8 rounded-full transition"
-          >
+          <button onClick={() => navigateTo('/about')} className="bg-green-600/30 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold py-4 px-8 rounded-full transition">
             Tentang Kami
           </button>
         </div>
       </div>
     </section>
-  );
 
-  // Added isStandalone prop to adjust padding when shown on Home vs standalone page
-  const AboutSection = ({ isStandalone = false }: { isStandalone?: boolean }) => (
-    <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-24'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-           <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Tentang Kami</h2>
-           <h3 className="text-4xl md:text-3xl font-serif font-bold text-slate-900">Dedikasi untuk Kualitas Komoditas Indonesia.</h3>
-        </div>
+    <AboutSection isStandalone={false} />
+    
+    {/* Home Favorites - MENGGUNAKAN DATA DATABASE */}
+    <section className="py-2 bg-stone-50">
+       <div className="container mx-auto px-6">
+         <div className="text-center mb-10">
+           <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Daftar Produk</h2>
+           <h3 className="text-4xl font-serif font-bold text-slate-900 mb-4">Produk Pilihan Kami</h3>
+         </div>
+         {/* Tampilkan 4 Produk Teratas */}
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+           {products.slice(0, 4).map((product) => (
+             <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+           ))}
+         </div>
+       </div>
+    </section>
 
-        <div className="flex flex-col lg:flex-row items-center gap-16">
-          <div className="flex-1 relative">
-            <img
-              src="/kelapakartun.png"
-              alt="Dekorasi sudut"
-              className="absolute -top-10 -left-10 w-40 h-40 z-30 object-contain pointer-events-none -rotate-12"
-/>
-            <div className="grid grid-cols-2 gap-4 relative z-10">
+    <LocationSection isStandalone={false} />
+  </>
+);
+
+// 2. ABOUT SECTION
+const AboutSection = ({ isStandalone = false }: { isStandalone?: boolean }) => (
+  <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-24'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
+    <div className="container mx-auto px-6">
+      <div className="text-center mb-16">
+          <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Tentang Kami</h2>
+          <h3 className="text-4xl md:text-3xl font-serif font-bold text-slate-900">Dedikasi untuk Kualitas Komoditas Indonesia.</h3>
+      </div>
+      <div className="flex flex-col lg:flex-row items-center gap-16">
+        <div className="flex-1 relative">
+           <div className="grid grid-cols-2 gap-4 relative z-10">
               <img src="/tentangkami1.jpg" className="rounded-2xl w-full h-80 object-cover shadow-xl transform translate-y-8" alt="2" />
               <img src="/tentangkami2.jpg" className="rounded-2xl w-full h-80 object-cover shadow-xl" alt="1" />
-            </div>
-          </div>
-
-          
-          
-          <div className="flex-1">
-            <h3 className="text-3xl font-serif font-bold text-slate-900 mb-6">Kenapa Bermitra dengan PT Radhika Narya Daruna?</h3>
-            <p className="text-slate-600 leading-relaxed mb-6 text-lg">
-              Di PT Radhika Narya Daruna, kami memahami bahwa konsistensi adalah kunci bisnis Anda. 
-              Kami bukan sekadar penjual, melainkan mitra rantai pasok yang berkomitmen menjaga ketersediaan stok 
-              (availability) dan kestabilan kualitas.
-              kami memastikan setiap kilogram Kopra dan produk kelapa yang Anda terima memiliki spesifikasi yang tepat untuk efisiensi produksi Anda.
-            </p>
-            
-            
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              <div className="flex items-start gap-4">
-               <div className="bg-orange-100 p-3 rounded-xl text-orange-600 shrink-0">
-                <Sparkles size={24} />
-               </div>
+           </div>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-3xl font-serif font-bold text-slate-900 mb-6">Kenapa Bermitra dengan Kami?</h3>
+          <p className="text-slate-600 leading-relaxed mb-6 text-lg">
+            Di PT Radhika Narya Daruna, kami memahami bahwa konsistensi adalah kunci bisnis Anda. Kami memastikan setiap kilogram Kopra dan produk kelapa yang Anda terima memiliki spesifikasi yang tepat.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div className="flex items-start gap-4">
+              <div className="bg-orange-100 p-3 rounded-xl text-orange-600 shrink-0"><Sparkles size={24} /></div>
               <div>
                 <h4 className="font-bold text-slate-900 mb-1">Sortir Grade Transparan</h4>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                Kami memisahkan Kopra Regular (Mill Grade) dan Asongan secara tegas, sehingga Anda mendapatkan kualitas sesuai harga yang Anda bayar.
-                </p>
+                <p className="text-sm text-slate-500">Kami memisahkan Kopra Regular dan Asongan secara tegas.</p>
               </div>
-             </div>
-             <div className="flex items-start gap-4">
-               <div className="bg-orange-100 p-3 rounded-xl text-orange-600 shrink-0">
-                <Sparkles size={24} />
-               </div>
-              <div>
-                <h4 className="font-bold text-slate-900 mb-1">Kopra Premium</h4>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                Kami melakukan quality control ketat untuk memastikan kadar air (moisture content) sesuai standar, meminimalisir risiko susut dan jamur saat pengiriman.
-                </p>
-              </div>
-             </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
 
-  // New component specifically for Home page preview
-  const HomeFavoritesSection = () => (
-    <section className="py-2 bg-stone-50">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-10">
-          <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Daftar Produk</h2>
-          <h3 className="text-4xl font-serif font-bold text-slate-900 mb-4">Produk Pilihan Kami</h3>
-          <p className="text-slate-600 max-w-xl mx-auto">
-            Temukan Media Tanam yang Tepat untuk Setiap Fase Pertumbuhan.
-          </p>
-        </div>
+// 3. MENU PAGE (Menerima products dari database)
+interface MenuPageProps {
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (c: string) => void;
+  addToCart: (p: Product, q: number) => void;
+  products: Product[]; // ✅ TERIMA DATA DATABASE
+}
 
-        {/* Show only top 4 items */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-          {MOCK_PRODUCTS.slice(0, 4).map((product) => (
-            <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+const MenuPage: React.FC<MenuPageProps> = ({ searchQuery, setSearchQuery, selectedCategory, setSelectedCategory, addToCart, products }) => {
+  // Filter Data Database
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "Semua" || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, selectedCategory, products]);
 
-  const MenuSection = () => (
+  return (
     <section className="min-h-screen pt-24 pb-20 bg-stone-50 animate-in fade-in duration-500">
       <div className="container mx-auto px-6">
         {/* Filter & Search */}
@@ -339,9 +133,7 @@ const App: React.FC = () => {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-orange-200 text-orange-600 shadow-md'
-                    : 'bg-stone-200 text-slate-600 hover:bg-stone-200'
+                  selectedCategory === cat ? 'bg-orange-200 text-orange-600 shadow-md' : 'bg-stone-200 text-slate-600 hover:bg-stone-200'
                 }`}
               >
                 {cat}
@@ -355,7 +147,7 @@ const App: React.FC = () => {
             {filteredProducts.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                 <Search size={48} className="mb-4 opacity-30" />
-                <p>Maaf, menu tidak ditemukan.</p>
+                <p>Maaf, produk tidak ditemukan atau belum dimuat.</p>
               </div>
             ) : (
               filteredProducts.map((product) => (
@@ -366,505 +158,413 @@ const App: React.FC = () => {
       </div>
     </section>
   );
+};
 
-  // Added isStandalone prop
-  const LocationSection = ({ isStandalone = false }: { isStandalone?: boolean }) => (
-    <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-8'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
-       <div className="container mx-auto px-6">
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-serif font-bold text-slate-900 mb-4">Kunjungi Kami</h2>
-            <p className="text-slate-600">Kami menantikan kehadiran Anda dan keluarga.</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12 items-start">
-             <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Informasi Kontak</h3>
-                
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-orange-100 p-3 rounded-full text-orange-600">
-                      <MapPin size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">Alamat Utama</h4>
-                      <p className="text-slate-600">Apartement Educity Pakuwon City Tower Stamford Kalisari Street Dharma Selatan, Surabaya, Indonesia.</p>
-                    </div>
+// 4. LOCATION PAGE
+const LocationSection = ({ isStandalone = false }: { isStandalone?: boolean }) => (
+  <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-8'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
+     <div className="container mx-auto px-6">
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-serif font-bold text-slate-900 mb-4">Kunjungi Kami</h2>
+          <p className="text-slate-600">Kami menantikan kehadiran Anda dan keluarga.</p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-12 items-start">
+           <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+              <h3 className="text-2xl font-bold text-slate-900 mb-6">Informasi Kontak</h3>
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="bg-orange-100 p-3 rounded-full text-orange-600"><MapPin size={24} /></div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">Alamat Utama</h4>
+                    <p className="text-slate-600">Apartement Educity Pakuwon City Tower Stamford Kalisari Street Dharma Selatan, Surabaya.</p>
                   </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="bg-orange-100 p-3 rounded-full text-orange-600">
-                      <Phone size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900">Telepon & Reservasi</h4>
-                      <p className="text-slate-600">+62 21 555 0199</p>
-                      <p className="text-slate-500 text-sm">Setiap hari: 09:00 - 21:00</p>
-                    </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="bg-orange-100 p-3 rounded-full text-orange-600"><Phone size={24} /></div>
+                  <div>
+                    <h4 className="font-bold text-slate-900">Telepon</h4>
+                    <p className="text-slate-600">+62 21 555 0199</p>
                   </div>
-
-                  
                 </div>
-
-                <div className="mt-8 pt-8 border-t border-slate-200">
-                   <h4 className="font-bold text-slate-900 mb-3">Jam Operasional</h4>
-                   <ul className="space-y-2 text-sm text-slate-600">
-                      <li className="flex justify-between"><span>Senin - Jumat</span> <span className="font-medium">10:00 - 22:00</span></li>
-                      <li className="flex justify-between"><span>Sabtu - Minggu</span> <span className="font-medium">09:00 - 23:00</span></li>
-                   </ul>
-                </div>
-             </div>
-
-             {/* --- AWAL BAGIAN PETA --- */}
-              <div className="h-[500px] bg-slate-200 rounded-3xl overflow-hidden shadow-lg relative group">
-  
-  {/* Gambar Peta Background */}
-  <img 
-    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop" 
-    alt="Map Location" 
-    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-500"
-  />
-
-  {/* Overlay Tombol (Sekarang sudah jadi Link) */}
-  <div className="absolute inset-0 flex items-center justify-center">
-    <a 
-      href="https://maps.app.goo.gl/7rHLRKXXzssGwuYS7" 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce hover:bg-slate-50 transition-colors cursor-pointer text-slate-900"
-    >
-      <MapPin className="text-red-600" size={24}/>
-      <span className="font-bold">Lokasi Kami</span>
-    </a>
               </div>
-             </div>
-          </div>
-       </div>
-    </section>
-  );
+           </div>
+           
+           {/* PETA */}
+           <div className="h-[500px] bg-slate-200 rounded-3xl overflow-hidden shadow-lg relative group">
+              <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop" alt="Map" className="w-full h-full object-cover opacity-80" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <a href="http://googleusercontent.com/maps.google.com/9" target="_blank" rel="noopener noreferrer" className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce hover:bg-slate-50 transition-colors cursor-pointer text-slate-900">
+                  <MapPin className="text-red-600" size={24}/>
+                  <span className="font-bold">Lokasi Kami</span>
+                </a>
+              </div>
+           </div>
+        </div>
+     </div>
+  </section>
+);
+
+// =================================================================
+// MAIN APP COMPONENT
+// =================================================================
+
+const AppContent: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Scroll to top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  // States
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
+  
+  // ✅ STATE UNTUK DATA DATABASE (PENGGANTI MOCK DATA)
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // ✅ FETCH DATA DARI DATABASE SAAT WEBSITE DIBUKA
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/products');
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Login States
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [username, setUsername] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+
+  // Check Login Status on Route Change
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedRole = localStorage.getItem('role');
+    const storedUser = localStorage.getItem('username');
+    
+    if (token) {
+      setIsLoggedIn(true);
+      setUsername(storedRole === 'ADMIN' ? 'Admin' : (storedUser || 'User')); 
+    } else {
+      setIsLoggedIn(false);
+      setUsername("");
+    }
+  }, [location.pathname]);
+
+  // Cart Persistence
+  useEffect(() => {
+    const savedCart = localStorage.getItem('shopping-cart');
+    if (savedCart) setCart(JSON.parse(savedCart));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('shopping-cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Handle Scroll Styling
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Cart Functions
+  const addToCart = (product: Product, quantity: number) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) return prev.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item);
+      return [...prev, { ...product, quantity: quantity }];
+    });
+    setIsCartOpen(true);
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCart((prev) => prev.map((item) => item.id === id ? { ...item, quantity: item.quantity + delta } : item).filter((item) => item.quantity > 0));
+  };
+
+  const removeFromCart = (id: number) => setCart((prev) => prev.filter((item) => item.id !== id));
+
+  const handleCheckout = async () => {
+    // 1. Cek Login
+    if (!isLoggedIn) {
+      alert("Silakan Login terlebih dahulu untuk menyelesaikan pesanan.");
+      navigate('/login');
+      setIsCartOpen(false);
+      return;
+    }
+
+    // 2. Cek Keranjang Kosong
+    if (cart.length === 0) {
+      alert("Keranjang belanja Anda kosong.");
+      return;
+    }
+
+    // 3. Hitung Data (Untuk Database & WA)
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.1;
+    const totalPayment = subtotal + tax;
+
+    // --- PROSES SIMPAN KE DATABASE (REKAP ADMIN) ---
+    try {
+      // Kita pakai 'await' agar WA baru terbuka SETELAH data tersimpan
+      await axios.post('http://localhost:5000/api/orders', {
+        customerName: username,   // Nama User yang sedang login
+        items: cart,              // Daftar belanjaan
+        totalPrice: totalPayment  // Total bayar
+      });
+      
+      // Opsional: Console log untuk memastikan sukses
+      console.log("Data berhasil disimpan ke Rekap Admin");
+
+    } catch (error) {
+      console.error("Gagal menyimpan ke database:", error);
+      // Pilihan: Mau tetap lanjut ke WA meski database error?
+      // Jika ya, biarkan saja. Jika tidak, return di sini.
+      alert("Terjadi kesalahan sistem, namun Anda tetap akan diarahkan ke WhatsApp.");
+    }
+
+    // --- PROSES KIRIM KE WHATSAPP ---
+    const phoneNumber = "628886268884"; // Ganti nomor admin Anda
+    let message = `Halo Admin PT Radhika Narya Daruna,\n\nSaya *${username}* ingin memesan:\n\n`;
+    
+    cart.forEach((item, index) => {
+      message += `${index + 1}. *${item.name}* (${item.quantity} pcs) - ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price * item.quantity)}\n`;
+    });
+    
+    message += `\nSubtotal: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(subtotal)}`;
+    message += `\nPajak (10%): ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(tax)}`;
+    message += `\n*TOTAL: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(totalPayment)}*`;
+    message += `\n\nMohon diproses, terima kasih.`;
+    
+    // Buka WA di tab baru
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+
+    // --- BERSIHKAN KERANJANG ---
+    setCart([]);
+    localStorage.removeItem('shopping-cart');
+    setIsCartOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    localStorage.removeItem('shopping-cart');
+    setIsLoggedIn(false);
+    setUsername("");
+    setCart([]);
+    setShowProfileMenu(false);
+    navigate('/');
+  };
+
+  const formatRupiah = (price: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const tax = subtotal * 0.1;
+  const total = subtotal + tax;
+
+  // Search Preview Logic - MENGGUNAKAN DATA DATABASE
+  const searchPreviewItems = useMemo(() => {
+    if (searchQuery.length === 0) return [];
+    return products.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
+  }, [searchQuery, products]);
+
+  const isLoginPage = location.pathname === '/login';
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   return (
-    
     <div className="min-h-screen text-slate-800 font-sans relative bg-white">
       
       {/* NAVBAR */}
-      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled || activePage !== 'home' ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
-        <div className="container mx-auto px-6 flex justify-between items-center">
-          <button onClick={() => navigateTo('home')} className="flex items-center gap-2 group -ml-5">
-  
- <button onClick={() => navigateTo('home')} className="flex items-center gap-2 group">
-  {/* Gambar Logo */}
-  <img 
-    src="/logobulet.png" 
-    alt="Logo PT Radhika" 
-    className="h-10 w-auto object-contain group-hover:rotate-3 transition-transform"
-  />
-  
-  {/* Teks Nama PT */}
-  <span className={`text-xl font-bold font-serif tracking-tight ${scrolled || activePage !== 'home' ? 'text-slate-900' : 'text-white'}`}>
-    PT Radhika Narya Daruna
-  </span>
-</button>
-</button>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-1">
-            <button 
-              onClick={() => navigateTo('home')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activePage === 'home' ? 'text-orange-600 bg-orange-200' : 'text-slate-600 hover:text-orange-600'}`}
-            >
-              Beranda
+      {!isLoginPage && !isAdminPage && (
+        <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled || location.pathname !== '/' ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
+          <div className="container mx-auto px-6 flex justify-between items-center">
+            <button onClick={() => navigate('/')} className="flex items-center gap-2 group -ml-5">
+              <img src="/logobulet.png" alt="Logo" className="h-10 w-auto object-contain group-hover:rotate-3 transition-transform" />
+              <span className={`text-xl font-bold font-serif tracking-tight ${scrolled || location.pathname !== '/' ? 'text-slate-900' : 'text-white'}`}>PT Radhika Narya Daruna</span>
             </button>
-            <button 
-              onClick={() => navigateTo('about')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activePage === 'about' ? 'text-orange-600 bg-orange-200' : (scrolled || activePage !== 'home' ? 'text-slate-600 hover:text-orange-600' : 'text-white hover:text-orange-200')}`}
-            >
-              Tentang Kami
-            </button>
-            <button 
-              onClick={() => navigateTo('menu')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activePage === 'menu' ? 'text-orange-600 bg-orange-200' : (scrolled || activePage !== 'home' ? 'text-slate-600 hover:text-orange-600' : 'text-white hover:text-orange-200')}`}
-            >
-              Menu & Pesan
-            </button>
-             <button 
-              onClick={() => navigateTo('location')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition ${activePage === 'location' ? 'text-orange-600 bg-orange-200' : (scrolled || activePage !== 'home' ? 'text-slate-600 hover:text-orange-600' : 'text-white hover:text-orange-200')}`}
-            >
-              Lokasi
-            </button>
-            <div className="hidden lg:flex items-center relative mx-4 flex-1 max-w-md group">
-  <Search className="absolute left-3 text-slate-400" size={18} />
-  
-  <input 
-    type="text" 
-    placeholder="Cari produk favorit..." 
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-    // Jika tekan Enter -> Buka halaman menu
-    onKeyDown={(e) => {
-      if (e.key === 'Enter') {
-        navigateTo('menu');
-        window.scrollTo(0, 0);
-      }
-    }}
-    className={`w-full pl-10 pr-10 py-2.5 rounded-full border text-sm transition-all outline-none ${
-      scrolled || activePage !== 'home' 
-        ? 'bg-white-200 border-slate-500 focus:bg-white focus:ring-3 focus:ring-orange-800' 
-        : 'bg-white/20 border-white/50 text-white placeholder:text-white/70 focus:bg-white focus:text-slate-900'
-    }`}
-  />
 
-  {/* Tombol Clear (X) - Muncul jika ada ketikan */}
-  {searchQuery && (
-    <button 
-      onClick={() => setSearchQuery("")}
-      className="absolute right-3 text-slate-400 hover:text-red-500"
-    >
-      <X size={16} />
-    </button>
-  )}
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-1">
+              {[
+                { path: '/', label: 'Beranda' },
+                { path: '/about', label: 'Tentang Kami' },
+                { path: '/menu', label: 'Menu & Pesan' },
+                { path: '/location', label: 'Lokasi' },
+              ].map((link) => (
+                <button 
+                  key={link.path}
+                  onClick={() => navigate(link.path)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                    location.pathname === link.path 
+                    ? 'text-orange-600 bg-orange-200' 
+                    : (scrolled || location.pathname !== '/' ? 'text-slate-600 hover:text-orange-600' : 'text-white hover:text-orange-200')
+                  }`}
+                >
+                  {link.label}
+                </button>
+              ))}
 
-  {/* === DROPDOWN PREVIEW === */}
-  {/* Hanya muncul jika ada ketikan & ada hasil */}
-  {searchQuery && (
-    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-      
-      {searchPreviewItems.length > 0 ? (
-        <>
-          <div className="py-2">
-            {searchPreviewItems.map((product) => (
-              <button
-                key={product.id}
-                onClick={() => {
-                  setSearchQuery(product.name); // Set teks pencarian
-                  navigateTo('menu');          // Pindah ke menu
-                  window.scrollTo(0, 0);       // Scroll ke atas
-                }}
-                className="w-full px-4 py-3 flex items-center gap-4 hover:bg-orange-50 transition text-left group/item"
-              >
-                {/* Gambar Kecil */}
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="w-10 h-10 rounded-lg object-cover bg-slate-100" 
-                />
-                
-                {/* Teks Nama & Harga */}
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800 group-hover/item:text-orange-700">
-                    {product.name}
-                  </p>
-                  <p className="text-xs text-orange-600 font-bold">
-                    {formatRupiah(product.price)}
-                  </p>
-                </div>
+              {/* Search Bar */}
+              <div className="hidden lg:flex items-center relative mx-4 flex-1 max-w-md group">
+                  <Search className="absolute left-3 text-slate-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Cari produk..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') navigate('/menu'); }}
+                    className={`w-full pl-10 pr-10 py-2.5 rounded-full border text-sm transition-all outline-none ${
+                      scrolled || location.pathname !== '/' 
+                        ? 'bg-white-200 border-slate-500 focus:bg-white focus:ring-3 focus:ring-orange-800' 
+                        : 'bg-white/20 border-white/50 text-white placeholder:text-white/70 focus:bg-white focus:text-slate-900'
+                    }`}
+                  />
+                  {searchQuery && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden z-50">
+                        {searchPreviewItems.map((product) => (
+                          <button key={product.id} onClick={() => { setSearchQuery(product.name); navigate('/menu'); }} className="w-full px-4 py-3 flex items-center gap-4 hover:bg-orange-50 transition text-left">
+                             <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                             <div className="flex-1"><p className="text-sm font-medium">{product.name}</p></div>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+              </div>
 
-                {/* Arrow Icon (Hiasan) */}
-                <ChevronRight size={16} className="text-slate-300 group-hover/item:text-orange-400" />
-              </button>
-            ))}
-          </div>
-          
-          {/* Footer Dropdown (Lihat Semua) */}
-          <button 
-            onClick={() => navigateTo('menu')}
-            className="w-full py-3 bg-slate-50 text-xs font-bold text-slate-600 border-t border-slate-100 hover:bg-slate-100 transition"
-          >
-            Lihat semua hasil untuk "{searchQuery}"
-          </button>
-        </>
-      ) : (
-        // Tampilan Jika Tidak Ada Hasil
-        <div className="p-6 text-center text-slate-400">
-          <p className="text-sm">Produk tidak ditemukan.</p>
-        </div>
-      )}
-    </div>
-  )}
-</div>
-            <div className={`ml-2 pl-4 border-l flex items-center gap-3 transition-colors duration-300 ${
-   scrolled || activePage !== 'home' 
-     ? 'border-slate-700'   // Warna saat Scroll (Abu-abu)
-     : 'border-white/300'    // Warna saat di Atas (Putih Transparan)
-}`}>
+              {/* Cart & User Button */}
+              <div className={`ml-2 pl-4 border-l flex items-center gap-3 transition-colors duration-300 ${scrolled || location.pathname !== '/' ? 'border-slate-700' : 'border-white/30'}`}>
+                <button onClick={() => setIsCartOpen(true)} className={`relative p-2 rounded-full transition ${scrolled || location.pathname !== '/' ? 'text-slate-600 hover:bg-orange-50' : 'text-white hover:bg-white/10'}`}>
+                   <ShoppingCart size={20} />
+                   {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">{cart.length}</span>}
+                </button>
 
-            {/* 1. TOMBOL KERANJANG (Desktop) */}
-             <button 
-               onClick={() => setIsCartOpen(true)} 
-               className={`relative p-2 rounded-full transition ${scrolled || activePage !== 'home' ? 'text-slate-600 hover:bg-orange-50 hover:text-orange-600' : 'text-white hover:bg-white/10'}`}
-            >
-               <ShoppingCart size={20} />
-    
-            {/* Badge Merah (Jumlah Item) */}
-             {cart.length > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">
-               {cart.length}
-              </span>
-             )}
-             </button>
-        {isLoggedIn ? (
-        // --- KONDISI SUDAH LOGIN ---
-        <div className="relative z-50"> {/* Tambah z-50 biar menu selalu di atas */}
-          
-          <button 
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-full transition-all border border-slate-200 active:scale-95"
-          >
-            <div className="bg-orange-500 p-1 rounded-full text-white">
-              <UserIcon size={16} />
-            </div>
-            <span className="font-semibold text-sm">Hai, {username}</span>
-            <ChevronDown 
-              size={14} 
-              className={`transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} 
-            />
-          </button>
-          <div 
-            className={`
-              absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden
-              transform origin-top-right transition-all duration-300 ease-out z-[100]
-              ${showProfileMenu 
-                ? 'opacity-100 scale-100 translate-y-0 visible pointer-events-auto' 
-                : 'opacity-0 scale-95 -translate-y-2 invisible pointer-events-none'}
-            `}
-          >
-            {/* Header Dropdown */}
-            <div className="p-4 bg-slate-50 border-b border-slate-100">
-              <p className="text-xs text-slate-500 mb-1">Masuk sebagai</p>
-              <p className="font-bold text-slate-800 truncate text-sm">{username}</p>
-              <div className="flex items-center gap-1 mt-2">
-                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                 <span className="text-[10px] text-green-600 font-medium">Akun Aktif</span>
+                {isLoggedIn ? (
+                  <div className="relative z-50">
+                    <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-full transition-all border border-slate-200">
+                      <div className="bg-orange-500 p-1 rounded-full text-white"><UserIcon size={16} /></div>
+                      <span className="font-semibold text-sm">Hai, {username}</span>
+                      <ChevronDown size={14} className={`transition ${showProfileMenu ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showProfileMenu && (
+                       <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100]">
+                          <div className="p-2">
+                             <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 font-medium">
+                               <LogOut size={16} /> Keluar (Logout)
+                             </button>
+                          </div>
+                       </div>
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={() => navigate('/login')} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-lg">
+                    <UserIcon size={18} /> Login
+                  </button>
+                )}
               </div>
             </div>
-
-            {/* Menu Items */}
-            <div className="p-2">
-               <button 
-                onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg flex items-center gap-2 transition-colors font-medium"
-              >
-                <LogOut size={16} />
-                Keluar (Logout)
-              </button>
-            </div>
           </div>
-        </div>
-      ) : (
-        // --- KONDISI BELUM LOGIN (TOMBOL LOGIN) ---
-        <button 
-          onClick={() => setShowLoginModal(true)}
-          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-lg shadow-green-700/30 active:scale-95"
-        >
-          <UserIcon size={18} />
-          Login
-        </button>
+        </nav>
       )}
-</div>
-          </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="md:hidden flex items-center gap-4">
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2"
-            >
-              <ShoppingCart size={24} className={scrolled || activePage !== 'home' ? 'text-slate-900' : 'text-white'} />
-              {cart.length > 0 && <span className="absolute top-1 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border border-white"></span>}
-            </button>
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-              {isMobileMenuOpen 
-                ? <X size={24} className={scrolled || activePage !== 'home' ? 'text-slate-900' : 'text-white'} /> 
-                : <MenuIcon size={24} className={scrolled || activePage !== 'home' ? 'text-slate-900' : 'text-white'} />
-              }
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Nav Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-slate-100 p-4 flex flex-col gap-2 animate-in slide-in-from-top-2">
-            {[
-              { id: 'home', label: 'Beranda' }, 
-              { id: 'about', label: 'Tentang Kami' }, 
-              { id: 'menu', label: 'Menu Favorit' }, 
-              { id: 'location', label: 'Lokasi' }
-            ].map((item) => (
-              <button 
-                key={item.id} 
-                onClick={() => navigateTo(item.id as Page)}
-                className={`text-left px-4 py-3 rounded-xl font-medium transition flex justify-between items-center ${
-                  activePage === item.id ? 'bg-orange-50 text-orange-600' : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {item.label}
-                {activePage === item.id && <ChevronRight size={16} />}
-              </button>
-            ))}
-          </div>
-        )}
-      </nav>
-      {/* DYNAMIC CONTENT RENDERING */}
+      {/* ROUTES */}
       <main>
-        {activePage === 'home' ? (
-          <>
-            <HeroSection />
-            <AboutSection isStandalone={false} />
-            <HomeFavoritesSection />
-            <LocationSection isStandalone={false} />
-          </>
-        ) : (
-          <>
-            {activePage === 'about' && <AboutSection isStandalone={true} />}
-            {activePage === 'menu' && <MenuSection />}
-            {activePage === 'location' && <LocationSection isStandalone={true} />}
-          </>
-        )}
+        <Routes>
+          <Route path="/" element={<HomePage navigateTo={navigate} products={products} addToCart={addToCart} />} />
+          <Route path="/about" element={<AboutSection isStandalone={true} />} />
+          <Route path="/menu" element={
+            <MenuPage 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+              selectedCategory={selectedCategory} 
+              setSelectedCategory={setSelectedCategory}
+              addToCart={addToCart} 
+              products={products} // ✅ KIRIM DATA DATABASE
+            />
+          } />
+          <Route path="/location" element={<LocationSection isStandalone={true} />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Routes>
       </main>
       
-      {/* GLOBAL FOOTER (Now visible on all pages including Home to allow scrolling) */}
-      <footer className="bg-green-800 text-slate-300 py-12 border-t border-slate-800">
-        <div className="container mx-auto px-6 text-center">
-          <div className="flex justify-center items-center gap-2 mb-4">
-            <img 
-             src="/logobulet.png" 
-             alt="Logo PT Radhika" 
-             className="h-10 w-auto object-contain group-hover:rotate-3 transition-transform"
-            />
-            <span className="text-lg font-bold font-serif text-white">
-              PT Radhika Narya Daruna
-            </span>
-          </div>
-          <p className="text-xs text-white">&copy; {new Date().getFullYear()} PT Radhika Narya Daruna. All rights reserved.</p>
-        </div>
-      </footer>
-
-      {/* CART DRAWER (Floating Side Panel) */}
-      {/* Overlay */}
-      {isCartOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] transition-opacity"
-          onClick={() => setIsCartOpen(false)}
-        />
-      )}
-      
-      {/* Drawer Panel */}
-      <div className={`fixed inset-y-0 right-0 z-50 w-full md:w-[400px] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col z-[9999] ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-          <div>
-            <h2 className="text-xl font-bold font-serif text-slate-900">Pesanan Anda</h2>
-            <p className="text-xs text-slate-500">{cart.length} item dipilih</p>
-          </div>
-          <button 
-            onClick={() => setIsCartOpen(false)}
-            className="p-2 hover:bg-slate-200 rounded-full transition"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Cart Items List */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
-              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-2">
-                <ShoppingCart size={32} className="opacity-20" />
-              </div>
-              <p className="text-sm font-medium">Keranjang masih kosong</p>
-              <button 
-                onClick={() => { setIsCartOpen(false); navigateTo('menu'); }}
-                className="text-orange-600 text-sm font-semibold hover:underline"
-              >
-                Lihat Produk
-              </button>
+      {/* FOOTER */}
+      {!isLoginPage && !isAdminPage && (
+        <footer className="bg-green-800 text-slate-300 py-12 border-t border-slate-800">
+          <div className="container mx-auto px-6 text-center">
+            <div className="flex justify-center items-center gap-2 mb-4">
+              <img src="/logobulet.png" alt="Logo" className="h-10 w-auto" />
+              <span className="text-lg font-bold font-serif text-white">PT Radhika Narya Daruna</span>
             </div>
-          ) : (
-            <>
-              {cart.map((item) => (
-                <div key={item.id} className="flex gap-4">
-                  <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-xl border border-slate-100" />
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-semibold text-slate-800 text-sm line-clamp-1">{item.name}</h4>
-                      <p className="text-orange-600 font-bold text-sm">{formatRupiah(item.price)}</p>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-100">
-                        <button 
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:text-orange-600 active:scale-95 transition"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="w-6 h-6 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:text-orange-600 active:scale-95 transition"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                      <button 
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-slate-300 hover:text-red-500 transition"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+            <p className="text-xs text-white">© {new Date().getFullYear()} PT Radhika Narya Daruna. All rights reserved.</p>
+          </div>
+        </footer>
+      )}
+
+      {/* CART DRAWER */}
+      {isCartOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999]" onClick={() => setIsCartOpen(false)} />
+          <div className="fixed inset-y-0 right-0 z-[9999] w-full md:w-[400px] bg-white shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h2 className="text-xl font-bold font-serif text-slate-900">Pesanan Anda</h2>
+              <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-slate-200 rounded-full"><X size={20} /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {cart.length === 0 ? (
+                <div className="text-center text-slate-400 mt-20">Keranjang kosong</div>
+              ) : (
+                cart.map((item) => (
+                  <div key={item.id} className="flex gap-4">
+                    <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
+                    <div className="flex-1">
+                       <h4 className="font-semibold text-slate-800">{item.name}</h4>
+                       <p className="text-orange-600 font-bold">{formatRupiah(item.price)}</p>
+                       <div className="flex items-center gap-2 mt-2">
+                          <button onClick={() => updateQuantity(item.id, -1)} className="p-1 bg-slate-100 rounded"><Minus size={14}/></button>
+                          <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                          <button onClick={() => updateQuantity(item.id, 1)} className="p-1 bg-slate-100 rounded"><Plus size={14}/></button>
+                          <button onClick={() => removeFromCart(item.id)} className="ml-auto text-red-500"><Trash2 size={16}/></button>
+                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
+                ))
+              )}
+            </div>
 
-        {/* Footer Totals */}
-        <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between text-slate-500 text-sm">
-              <span>Subtotal</span>
-              <span>{formatRupiah(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-slate-500 text-sm">
-              <span>Pajak (10%)</span>
-              <span>{formatRupiah(tax)}</span>
-            </div>
-            <div className="flex justify-between text-slate-900 font-bold text-xl pt-3 border-t border-dashed border-slate-200">
-              <span>Total</span>
-              <span>{formatRupiah(total)}</span>
-            </div>
+            {cart.length > 0 && (
+              <div className="p-6 bg-white border-t border-slate-100 shadow-xl">
+                 <div className="flex justify-between mb-2 text-sm"><span>Subtotal</span><span>{formatRupiah(subtotal)}</span></div>
+                 <div className="flex justify-between mb-4 text-sm"><span>Pajak (10%)</span><span>{formatRupiah(tax)}</span></div>
+                 <div className="flex justify-between mb-6 font-bold text-xl"><span>Total</span><span>{formatRupiah(total)}</span></div>
+                 <button onClick={handleCheckout} className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold">Konfirmasi Pesanan</button>
+              </div>
+            )}
           </div>
-          <button 
-          onClick={handleCheckout} // 👈 Tambahkan ini
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition-colors"
-          >
-            Konfirmasi Pesanan
-          </button>
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Receipt Modal (Unchanged functionality) */}
-      <ReceiptModal 
-        isOpen={isReceiptOpen}
-        onClose={() => {
-          setIsReceiptOpen(false);
-          clearCart();
-          setAiSuggestion(null);
-        }}
-        data={receiptData}
-      />
-      <LoginModal 
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLogin={handleLogin}
-      />
-      <ChatBot products={filteredProducts}
-      />
-   </div>
-);
-}
-const XIcon = ({size}: {size:number}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);
+      {!isAdminPage && (
+        <ChatBot products={products} />
+      )}
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+};
 
 export default App;
