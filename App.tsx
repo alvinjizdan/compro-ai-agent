@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import axios from 'axios'; // ✅ IMPORT AXIOS
+import axios from 'axios'; 
 import ProductCard from './components/ProductCard';
 import { Search, ShoppingCart, Trash2, Plus, Minus, Sparkles, X, MapPin, Phone, ArrowRight, Menu as MenuIcon, ChevronRight, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { Product, CartItem, ReceiptData } from './types';
@@ -71,7 +71,7 @@ const HomePage = ({ navigateTo, products, addToCart }: { navigateTo: (path: stri
 
 // 2. ABOUT SECTION
 const AboutSection = ({ isStandalone = false }: { isStandalone?: boolean }) => (
-  <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-24'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
+  <section className={`${isStandalone ? 'min-h-screen pt-32 pb-20' : 'py-32'} bg-white animate-in slide-in-from-bottom-4 duration-500`}>
     <div className="container mx-auto px-6">
       <div className="text-center mb-16">
           <h2 className="text-orange-600 font-bold tracking-widest uppercase text-sm mb-2">Tentang Kami</h2>
@@ -123,6 +123,7 @@ const MenuPage: React.FC<MenuPageProps> = ({ searchQuery, setSearchQuery, select
       return matchesSearch && matchesCategory;
     });
   }, [searchQuery, selectedCategory, products]);
+
 
   return (
     <section className="min-h-screen pt-24 pb-20 bg-stone-50 animate-in fade-in duration-500">
@@ -195,7 +196,7 @@ const LocationSection = ({ isStandalone = false }: { isStandalone?: boolean }) =
            <div className="h-[500px] bg-slate-200 rounded-3xl overflow-hidden shadow-lg relative group">
               <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop" alt="Map" className="w-full h-full object-cover opacity-80" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <a href="http://googleusercontent.com/maps.google.com/9" target="_blank" rel="noopener noreferrer" className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce hover:bg-slate-50 transition-colors cursor-pointer text-slate-900">
+                <a href="https://maps.app.goo.gl/suC8TopfzE9wuNLj7" target="_blank" rel="noopener noreferrer" className="bg-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-bounce hover:bg-slate-50 transition-colors cursor-pointer text-slate-900">
                   <MapPin className="text-red-600" size={24}/>
                   <span className="font-bold">Lokasi Kami</span>
                 </a>
@@ -224,6 +225,7 @@ const AppContent: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua");
+
   
   // ✅ STATE UNTUK DATA DATABASE (PENGGANTI MOCK DATA)
   const [products, setProducts] = useState<Product[]>([]);
@@ -381,20 +383,148 @@ const AppContent: React.FC = () => {
   const isLoginPage = location.pathname === '/login';
   const isAdminPage = location.pathname.startsWith('/admin');
 
+  const [isOpen, setIsOpen] = useState(false);
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen text-slate-800 font-sans relative bg-white">
       
       {/* NAVBAR */}
       {!isLoginPage && !isAdminPage && (
-        <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled || location.pathname !== '/' ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
-          <div className="container mx-auto px-6 flex justify-between items-center">
-            <button onClick={() => navigate('/')} className="flex items-center gap-2 group -ml-5">
-              <img src="/logobulet.png" alt="Logo" className="h-10 w-auto object-contain group-hover:rotate-3 transition-transform" />
-              <span className={`text-xl font-bold font-serif tracking-tight ${scrolled || location.pathname !== '/' ? 'text-slate-900' : 'text-white'}`}>PT Radhika Narya Daruna</span>
-            </button>
+        <nav 
+          className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+            scrolled || location.pathname !== '/' 
+              ? 'bg-white/95 backdrop-blur-md shadow-sm py-3' 
+              : 'bg-transparent py-5'
+          }`}
+        >
+          <div className="container mx-auto px-6">
+            <div className="flex justify-between items-center">
+              
+              {/* 1. LOGO */}
+              <button onClick={() => navigate('/')} className="flex items-center gap-2 group -ml-5">
+                <img 
+                  src="/logobulet.png" 
+                  alt="Logo" 
+                  className="h-10 w-auto object-contain group-hover:rotate-3 transition-transform" 
+                />
+                <span className={`text-xl font-bold font-serif tracking-tight ${
+                  scrolled || location.pathname !== '/' ? 'text-slate-900' : 'text-white'
+                }`}>
+                  PT Radhika Narya Daruna
+                </span>
+              </button>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-1">
+              {/* 2. DESKTOP MENU (Hanya muncul di Layar Medium ke atas) */}
+              {/* Perhatikan 'hidden md:flex' -> Artinya HILANG di HP */}
+              <div className="hidden md:flex items-center gap-1">
+                {[
+                  { path: '/', label: 'Beranda' },
+                  { path: '/about', label: 'Tentang Kami' },
+                  { path: '/menu', label: 'Menu & Pesan' },
+                  { path: '/location', label: 'Lokasi' },
+                ].map((link) => (
+                  <button 
+                    key={link.path}
+                    onClick={() => navigate(link.path)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      location.pathname === link.path 
+                      ? 'text-orange-600 bg-orange-200' 
+                      : (scrolled || location.pathname !== '/' ? 'text-slate-600 hover:text-orange-600' : 'text-white hover:text-orange-200')
+                    }`}
+                  >
+                    {link.label}
+                  </button>
+                ))}
+
+                {/* SEARCH BAR (Hanya Desktop) */}
+                <div className="hidden lg:flex items-center relative mx-4 flex-1 max-w-md group">
+                    <Search className="absolute left-3 text-slate-400" size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Cari produk..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') navigate('/menu'); }}
+                      className={`w-full pl-10 pr-10 py-2.5 rounded-full border text-sm transition-all outline-none ${
+                        scrolled || location.pathname !== '/' 
+                          ? 'bg-white-200 border-slate-500 focus:bg-white focus:ring-3 focus:ring-orange-800' 
+                          : 'bg-white/20 border-white/50 text-white placeholder:text-white/70 focus:bg-white focus:text-slate-900'
+                      }`}
+                    />
+                    {searchQuery && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden z-50">
+                          {searchPreviewItems.map((product) => (
+                            <button key={product.id} onClick={() => { setSearchQuery(product.name); navigate('/menu'); }} className="w-full px-4 py-3 flex items-center gap-4 hover:bg-orange-50 transition text-left">
+                               <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                               <div className="flex-1"><p className="text-sm font-medium text-slate-900">{product.name}</p></div>
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                </div>
+              </div>
+
+              {/* 3. ICON KANAN (Cart, User, & Hamburger) */}
+              <div className={`ml-2 pl-4 flex items-center gap-3 transition-colors duration-300 ${
+                  scrolled || location.pathname !== '/' ? 'border-l border-slate-700' : 'md:border-l border-white/30'
+                }`}>
+                
+                {/* Cart Icon */}
+                <button onClick={() => setIsCartOpen(true)} className={`relative p-2 rounded-full transition ${
+                  scrolled || location.pathname !== '/' ? 'text-slate-600 hover:bg-orange-50' : 'text-white hover:bg-white/10'
+                }`}>
+                   <ShoppingCart size={20} />
+                   {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">{cart.length}</span>}
+                </button>
+
+                {/* User Menu (Desktop Only) */}
+                <div className="hidden md:block">
+                  {isLoggedIn ? (
+                    <div className="relative z-50">
+                      <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-full transition-all border border-slate-200">
+                        <div className="bg-orange-500 p-1 rounded-full text-white"><UserIcon size={16} /></div>
+                        <span className="font-semibold text-sm">Hai, {username}</span>
+                        <ChevronDown size={14} className={`transition ${showProfileMenu ? 'rotate-180' : ''}`} />
+                      </button>
+                      {showProfileMenu && (
+                          <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100]">
+                            <div className="p-2">
+                                <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 font-medium">
+                                  <LogOut size={16} /> Keluar
+                                </button>
+                            </div>
+                          </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button onClick={() => navigate('/login')} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-lg">
+                      <UserIcon size={18} /> Login
+                    </button>
+                  )}
+                </div>
+
+                {/* TOMBOL HAMBURGER (Hanya muncul di HP / Mobile) */}
+                <button 
+                  className={`md:hidden p-2 rounded-md transition-colors ${
+                    scrolled || location.pathname !== '/' ? 'text-slate-800' : 'text-white'
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                  {isMobileMenuOpen ? <X size={28} /> : <MenuIcon size={28} />}
+                </button>
+
+              </div>
+            </div>
+          </div>
+
+          {/* 4. MOBILE DROPDOWN MENU (Baru ditambahkan) */}
+          {/* Menu ini muncul di bawah navbar saat tombol hamburger diklik */}
+          <div className={`md:hidden absolute top-full left-0 w-full bg-white shadow-xl border-t border-slate-100 transition-all duration-300 ease-in-out overflow-hidden ${
+            isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+          }`}>
+            <div className="flex flex-col p-4 space-y-2">
               {[
                 { path: '/', label: 'Beranda' },
                 { path: '/about', label: 'Tentang Kami' },
@@ -403,76 +533,35 @@ const AppContent: React.FC = () => {
               ].map((link) => (
                 <button 
                   key={link.path}
-                  onClick={() => navigate(link.path)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  onClick={() => {
+                    navigate(link.path);
+                    setIsMobileMenuOpen(false); // Tutup menu setelah klik
+                  }}
+                  className={`text-left px-4 py-3 rounded-lg text-sm font-semibold transition ${
                     location.pathname === link.path 
-                    ? 'text-orange-600 bg-orange-200' 
-                    : (scrolled || location.pathname !== '/' ? 'text-slate-600 hover:text-orange-600' : 'text-white hover:text-orange-200')
+                    ? 'bg-orange-50 text-orange-600' 
+                    : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   {link.label}
                 </button>
               ))}
 
-              {/* Search Bar */}
-              <div className="hidden lg:flex items-center relative mx-4 flex-1 max-w-md group">
-                  <Search className="absolute left-3 text-slate-400" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Cari produk..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') navigate('/menu'); }}
-                    className={`w-full pl-10 pr-10 py-2.5 rounded-full border text-sm transition-all outline-none ${
-                      scrolled || location.pathname !== '/' 
-                        ? 'bg-white-200 border-slate-500 focus:bg-white focus:ring-3 focus:ring-orange-800' 
-                        : 'bg-white/20 border-white/50 text-white placeholder:text-white/70 focus:bg-white focus:text-slate-900'
-                    }`}
-                  />
-                  {searchQuery && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden z-50">
-                        {searchPreviewItems.map((product) => (
-                          <button key={product.id} onClick={() => { setSearchQuery(product.name); navigate('/menu'); }} className="w-full px-4 py-3 flex items-center gap-4 hover:bg-orange-50 transition text-left">
-                             <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
-                             <div className="flex-1"><p className="text-sm font-medium">{product.name}</p></div>
-                          </button>
-                        ))}
-                    </div>
-                  )}
-              </div>
-
-              {/* Cart & User Button */}
-              <div className={`ml-2 pl-4 border-l flex items-center gap-3 transition-colors duration-300 ${scrolled || location.pathname !== '/' ? 'border-slate-700' : 'border-white/30'}`}>
-                <button onClick={() => setIsCartOpen(true)} className={`relative p-2 rounded-full transition ${scrolled || location.pathname !== '/' ? 'text-slate-600 hover:bg-orange-50' : 'text-white hover:bg-white/10'}`}>
-                   <ShoppingCart size={20} />
-                   {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full animate-bounce">{cart.length}</span>}
-                </button>
-
+              {/* Login/Logout Khusus Mobile (Karena tombol desktop di-hide) */}
+              <div className="border-t border-slate-100 mt-2 pt-3">
                 {isLoggedIn ? (
-                  <div className="relative z-50">
-                    <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-full transition-all border border-slate-200">
-                      <div className="bg-orange-500 p-1 rounded-full text-white"><UserIcon size={16} /></div>
-                      <span className="font-semibold text-sm">Hai, {username}</span>
-                      <ChevronDown size={14} className={`transition ${showProfileMenu ? 'rotate-180' : ''}`} />
-                    </button>
-                    {showProfileMenu && (
-                       <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100]">
-                          <div className="p-2">
-                             <button onClick={handleLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 font-medium">
-                               <LogOut size={16} /> Keluar (Logout)
-                             </button>
-                          </div>
-                       </div>
-                    )}
-                  </div>
+                   <button onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 text-red-600 font-medium hover:bg-red-50 rounded-lg flex items-center gap-2">
+                      <LogOut size={18} /> Keluar (Logout)
+                   </button>
                 ) : (
-                  <button onClick={() => navigate('/login')} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-full font-semibold transition-all shadow-lg">
-                    <UserIcon size={18} /> Login
-                  </button>
+                   <button onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }} className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold shadow-md active:scale-95 transition flex justify-center items-center gap-2">
+                      <UserIcon size={18} /> Login Sekarang
+                   </button>
                 )}
               </div>
             </div>
           </div>
+
         </nav>
       )}
 

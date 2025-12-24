@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 const API_KEY = "AIzaSyBwUweUP7ktEFcTxh8E5gnQk_Oe5q_KIQ0"; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// FUNGSI 1: BACA DATABASE EXCEL
+// BACA DATABASE EXCEL
 const loadExcelDatabase = async () => {
   try {
     // Mencari file di folder 'public'
@@ -33,7 +33,7 @@ const loadExcelDatabase = async () => {
   }
 };
 
-// FUNGSI 2: CHATBOT UTAMA
+// CHATBOT UTAMA
 export const getGeminiResponse = async (history: any[], message: string, webProducts: any[]) => {
   try {
     // Gunakan model terbaru
@@ -85,7 +85,7 @@ export const getGeminiResponse = async (history: any[], message: string, webProd
       ATURAN PENTING:
     1. HANYA jawab berdasarkan data di atas. Jangan mengarang harga/stok sendiri.
     2. Jika Stok tertulis "Habis" atau "Kosong", katakan maaf dan tawarkan produk lain yang "Ada".
-    3. Jika user bertanya hal di luar produk (misal: "Siapa Presiden Indonesia?"), jawab sopan bahwa kamu hanya melayani konsultasi media tanam.
+    3. Jika user bertanya hal di luar produk (misal: "Siapa Presiden Indonesia?"), jawab sopan bahwa kamu hanya melayani konsultasi kopra.
     4. PENTING: JANGAN gunakan format Markdown seperti tanda bintang (** atau *). Gunakan teks biasa saja.
     `;
 

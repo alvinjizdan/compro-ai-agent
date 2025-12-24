@@ -142,11 +142,11 @@ app.post('/api/reset-password/:token', async (req, res) => {
   }
 });
 
-    // 👇 KIRIM EMAIL ASLI
+    // KIRIM EMAIL ASLI
     const mailOptions = {
       from: '"Admin PT Radhika Narya Daruna" <no-reply@tokoanda.com>',
-      to: user.email, // 👈 Kirim ke email user yang ada di database
-      subject: 'Reset Password Toko',
+      to: user.email, // Kirim ke email user yang ada di database
+      subject: 'Permintaan Reset Password',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #ffffff;">
       <h2 style="color: #333333; text-align: center;">Permintaan Reset Password</h2>
@@ -184,9 +184,7 @@ app.post('/api/reset-password/:token', async (req, res) => {
   }
 });
 
-// ==========================================
-// 📦 API PRODUK (CRUD)
-// ==========================================
+// API PRODUK (CRUD)
 
 // 1. LIHAT SEMUA PRODUK
 app.get('/api/products', async (req, res) => {
@@ -381,15 +379,15 @@ sequelize.sync().then(async () => {
         role: "ADMIN" // 👑 Role Khusus Admin
       });
       console.log("\n========================================");
-      console.log("👑 AKUN ADMIN BERHASIL DIBUAT OTOMATIS!");
-      console.log("👤 Username: admin");
-      console.log("🔑 Password: ***REMOVED***");
+      console.log("AKUN ADMIN BERHASIL DIBUAT OTOMATIS!");
+      console.log("Username: admin");
+      console.log("Password: ***REMOVED***");
       console.log("========================================\n");
     } else {
-      console.log("ℹ️  Akun admin sudah tersedia.");
+      console.log("Akun admin sudah tersedia.");
     }
   } catch (error) {
-    console.error("⚠️ Gagal membuat admin otomatis:", error);
+    console.error("Gagal membuat admin otomatis:", error);
   }
 
   // 3. Baru Jalankan Server (Setelah DB Siap)
@@ -398,5 +396,5 @@ sequelize.sync().then(async () => {
   });
 
 }).catch(err => {
-  console.error('❌ Gagal koneksi database:', err);
+  console.error('Gagal koneksi database:', err);
 });
