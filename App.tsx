@@ -5,8 +5,10 @@ import { Search, ShoppingCart, Trash2, Plus, Minus, Sparkles, X, MapPin, Phone, 
 import { Product, CartItem, ReceiptData } from './types';
 import ChatBot from './components/Chatbot';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import Login from './src/pages/Login.tsx';
-import AdminDashboard from './src/pages/AdminDashboard.tsx';
+import Login from './src/pages/Login';
+import ForgotPassword from './src/pages/ForgotPassword';
+import ResetPassword from './src/pages/ResetPassword';
+import AdminDashboard from './src/pages/AdminDashboard';
 
 // Kategori Tetap Statis
 const CATEGORIES = ["Semua", "Bahan Baku", "Kopra", "Kelapa Utuh"];
@@ -492,6 +494,8 @@ const AppContent: React.FC = () => {
           <Route path="/location" element={<LocationSection isStandalone={true} />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </main>
       

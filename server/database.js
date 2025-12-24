@@ -10,8 +10,11 @@ const sequelize = new Sequelize({
 // 1. MODEL USER (Admin & Customer)
 const User = sequelize.define('User', {
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
+  email: { type: DataTypes.STRING, unique: true, allowNull: false }, // 👈 KOLOM BARU (WAJIB ADA)
   password: { type: DataTypes.STRING, allowNull: false },
-  role: { type: DataTypes.STRING, defaultValue: "USER" } // "ADMIN" atau "USER"
+  role: { type: DataTypes.STRING, defaultValue: "USER" },
+  resetToken: { type: DataTypes.STRING, allowNull: true },
+  resetTokenExpiry: { type: DataTypes.DATE, allowNull: true } 
 });
 
 // 2. MODEL PRODUCT (Barang Dagangan)
@@ -46,4 +49,4 @@ const connectDB = async () => {
 };
 
 // 👇 BAGIAN INI SANGAT PENTING (JANGAN LUPA EXPORT ORDER)
-module.exports = { connectDB, User, Product, Order };
+module.exports = { sequelize, User, Product, Order };

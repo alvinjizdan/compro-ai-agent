@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, ArrowRight, UserPlus, LogIn, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, ArrowRight, UserPlus, LogIn, Eye, EyeOff, Mail } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
   
   // State untuk Mode: Apakah sedang Login atau Register?
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -12,8 +14,7 @@ export default function Login() {
   // State Form
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState("USER"); // Default Role: USER
+  const [showPassword, setShowPassword] = useState(false);// Default Role: USER
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,12 +23,12 @@ export default function Login() {
 
     try {
       if (isRegisterMode) {
-        // --- LOGIKA REGISTER ---
-        await axios.post('http://localhost:5000/api/register', {
-          username,
-          password,
-          role // Kirim role (USER atau ADMIN)
-        });
+      await axios.post('http://localhost:5000/api/register', {
+       username,
+       email, // 👈 Kirim email ke server
+       password,
+      });
+      
         alert("Registrasi Berhasil! Silakan Login.");
         setIsRegisterMode(false); // Kembali ke mode login
       } else {
@@ -93,7 +94,23 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Input Password */}
+{isRegisterMode && (
+  <div>
+    <label className="block text-sm font-bold text-stone-700 mb-1">Email</label>
+    <div className="relative">
+      <Mail className="absolute left-3 top-3 text-stone-400" size={18} />
+      <input 
+        type="email" 
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition"
+        placeholder="nama@email.com"
+        required
+      />
+    </div>
+  </div>
+)}
+
           {/* Input Password */}
 <div>
   <label className="block text-sm font-bold text-stone-700 mb-1">Password</label>
@@ -125,36 +142,15 @@ export default function Login() {
   </div>
 </div>
 
-          {/* PILIHAN ROLE (Hanya Muncul Saat Register) */}
-          {isRegisterMode && (
-            <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-              <label className="block text-sm font-bold text-orange-800 mb-2">Daftar Sebagai:</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="role" 
-                    value="USER" 
-                    checked={role === "USER"} 
-                    onChange={(e) => setRole(e.target.value)}
-                    className="accent-orange-600 w-4 h-4"
-                  />
-                  <span className="text-sm font-medium text-stone-700">Pembeli (User)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="role" 
-                    value="ADMIN" 
-                    checked={role === "ADMIN"} 
-                    onChange={(e) => setRole(e.target.value)}
-                    className="accent-orange-600 w-4 h-4"
-                  />
-                  <span className="text-sm font-medium text-stone-700">Admin Toko</span>
-                </label>
-              </div>
-            </div>
-          )}
+          <div className="text-right mt-2">
+          <button 
+           type="button" // Penting agar tidak dianggap submit form
+           onClick={() => navigate('/forgot-password')} 
+           className="text-xs font-bold text-orange-600 hover:underline transition"
+          >
+            Lupa Password?
+          </button>
+         </div>
 
           {/* Tombol Submit */}
           <button 
