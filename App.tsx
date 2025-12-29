@@ -596,7 +596,7 @@ const AppContent: React.FC = () => {
               <img src="/logobulet.png" alt="Logo" className="h-10 w-auto" />
               <span className="text-lg font-bold font-serif text-white">PT Radhika Narya Daruna</span>
             </div>
-            <p className="text-xs text-white">© {new Date().getFullYear()} PT Radhika Narya Daruna. All rights reserved.</p>
+            <p className="text-xs text-white">© {new Date().getFullYear()} PT Radhika Narya Daruna. All Rights Reserved.</p>
           </div>
         </footer>
       )}
