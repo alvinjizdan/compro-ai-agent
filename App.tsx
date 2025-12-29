@@ -337,7 +337,7 @@ const AppContent: React.FC = () => {
     }
 
     // --- PROSES KIRIM KE WHATSAPP ---
-    const phoneNumber = "628886268884"; // Ganti nomor admin Anda
+    const phoneNumber = "628886268884"; 
     let message = `Halo Admin PT Radhika Narya Daruna,\n\nSaya *${username}* ingin memesan:\n\n`;
     
     cart.forEach((item, index) => {
