@@ -401,10 +401,10 @@ export default function AdminDashboard() {
         
         {/* --- 2. TAB PRODUK --- */}
         {activeTab === 'products' && (
-          <div className="animate-in fade-in zoom-in duration-300">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-stone-100 overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
               <div>
-                <h2 className="text-2xl md:text-3xl font-serif font-bold text-stone-800">Manajemen Produk</h2>
+                <h3 className="font-bold text-xl text-stone-800">Manajemen Produk</h3>
                 <p className="text-stone-500 mt-1 text-sm md:text-base">Atur stok, harga, dan ketersediaan barang di sini.</p>
               </div>
               <button 
