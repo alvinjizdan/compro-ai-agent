@@ -9,6 +9,7 @@ interface Product {
   image: string;
   category: string;
   description: string;
+  stock: number;
   satuan?: string; // Opsional (default: kg)
 }
 
@@ -16,6 +17,8 @@ interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, quantity: number) => void; // Kita update ini biar terima quantity
 }
+
+
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   // State untuk menyimpan angka inputan (Default 1)
@@ -31,6 +34,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
     }
   };
 
+  const isOutOfStock = product.stock === 0;
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-slate-100 flex flex-col h-full">
       {/* Gambar Produk */}
@@ -40,9 +45,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           alt={product.name} 
           className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
         />
-        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-700 shadow-sm">
-          Stok Ready
-        </div>
+        <span
+          className={`absolute top-2 right-2 px-3 py-1 text-xs font-bold rounded-full 
+          ${isOutOfStock 
+            ? "bg-red-100 text-red-600" // Warna jika Stok Habis (Merah)
+            : "bg-green-100 text-green-800" // Warna jika Stok Ready (Hijau)
+          }`}
+        >
+          {isOutOfStock ? "Stok Habis" : "Stok Ready"}
+        </span>
       </div>
 
       {/* Konten Produk */}
@@ -68,12 +79,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           {/* 🔥 BAGIAN INPUT MANUAL (KG/TON) 🔥 */}
           <div className="flex gap-2">
             <div className="relative w-1/3">
-               <input 
+              <input 
                  type="number" 
                  min="1"
+                 disabled={isOutOfStock} 
                  value={inputQty}
                  onChange={(e) => setInputQty(Number(e.target.value))}
-                 className="w-full border-2 border-slate-200 rounded-lg py-2 px-2 text-center font-bold text-slate-700 focus:border-green-500 focus:outline-none"
+                 className={`w-full border-2 rounded-lg py-2 px-2 text-center font-bold focus:outline-none
+                   ${isOutOfStock 
+                     ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" 
+                     : "border-slate-200 text-slate-700 focus:border-green-500"
+                   }
+                 `}
                />
                <span className="absolute right-1 top-2.5 text-xs text-slate-400 font-medium bg-white px-1">
                  {product.satuan || 'kg'}
@@ -82,10 +99,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
 
             <button 
               onClick={handleAdd}
-              className="flex-1 bg-green-700 hover:bg-green-600 text-white py-2 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+              disabled={isOutOfStock}
+              className={`flex-1 py-2 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 text-white
+                ${isOutOfStock
+                  ? "bg-gray-400 cursor-not-allowed" // Style tombol mati
+                  : "bg-green-700 hover:bg-green-600" // Style tombol hidup
+                }
+              `}
             >
               <ShoppingCart size={18} />
-              <span>Pesan</span>
+              <span>{isOutOfStock ? "Habis" : "Pesan"}</span>
             </button>
           </div>
 

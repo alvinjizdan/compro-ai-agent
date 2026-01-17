@@ -675,7 +675,7 @@ export default function AdminDashboard() {
 
               <div>
                 <label className="block text-sm font-bold text-stone-700 mb-1">Stok Tersedia</label>
-                <input type="number" name="stock" min="0"value={formData.stock === 0 ? '' : formData.stock} onChange={handleInputChange} required placeholder="0" className="w-full border border-stone-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none transition" />
+                <input type="number" value={formData.stock === 0 ? 0 : (formData.stock || '')} onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" />
               </div>
 
               <div>
