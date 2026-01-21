@@ -87,6 +87,8 @@ export const getGeminiResponse = async (history: any[], message: string, webProd
     2. Jika Stok tertulis "Habis" atau "Kosong", katakan maaf dan tawarkan produk lain yang "Ada".
     3. Jika user bertanya hal di luar produk (misal: "Siapa Presiden Indonesia?"), jawab sopan bahwa kamu hanya melayani konsultasi kopra.
     4. PENTING: JANGAN gunakan format Markdown seperti tanda bintang (** atau *). Gunakan teks biasa saja.
+    5. PENTING: Jika user salah ketik (typo) atau menggunakan singkatan (misal: "hrg kpra brp?", "klapa cngkil"), kamu HARUS cerdas menebak maksudnya ke produk yang paling relevan di data.
+    6. Jangan pernah mengoreksi ejaan user secara kaku (misal: "Maksud anda Kelapa?"), langsung saja jawab pertanyaannya seolah-olah ejaannya benar.
     `;
 
     const result = await chat.sendMessage(`${systemPrompt}\n\nUser: ${message}`);

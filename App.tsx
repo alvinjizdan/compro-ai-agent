@@ -13,9 +13,8 @@ import AdminDashboard from './src/pages/AdminDashboard';
 // Kategori Tetap Statis
 const CATEGORIES = ["Semua", "Bahan Baku", "Kopra", "Kelapa Utuh"];
 
-// =================================================================
-// 1. KOMPONEN HOME (Terima props 'products')
-// =================================================================
+
+// 1. KOMPONEN HOME
 const HomePage = ({ navigateTo, products, addToCart }: { navigateTo: (path: string) => void, products: Product[], addToCart: any }) => (
   <>
     {/* Hero Section */}
@@ -40,7 +39,7 @@ const HomePage = ({ navigateTo, products, addToCart }: { navigateTo: (path: stri
           <button onClick={() => navigateTo('/menu')} className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-8 rounded-full transition flex items-center justify-center gap-2 group">
             Pesan Sekarang <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </button>
-          <button onClick={() => navigateTo('/about')} className="bg-green-600/30 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-semibold py-4 px-8 rounded-full transition">
+          <button onClick={() => navigateTo('/about')} className="bg-green-600/30 hover:bg-green-600/20 backdrop-blur-sm border border-white/30 text-white font-semibold py-4 px-8 rounded-full transition">
             Tentang Kami
           </button>
         </div>

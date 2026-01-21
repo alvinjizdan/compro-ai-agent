@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, Package, Plus, Trash2, ClipboardList, 
-  ShoppingCart, Users, Menu, X, Save, Edit 
+  ShoppingCart, Users, Menu, X, Save, Edit, Calendar, Filter, RotateCcw, Loader2
 } from 'lucide-react';
 
 // Tipe Data
@@ -32,16 +32,36 @@ export default function AdminDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // --- STATE MOBILE MENU (BARU) ---
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // --- STATE FILTER TANGGAL (BARU) ---
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  // Hitung Total Pendapatan
-  const totalRevenue = orders.reduce((sum, order) => {
+  const filteredOrders = orders.filter((order) => {
+    if (!startDate && !endDate) return true;
+
+    const orderDate = new Date(order.date);
+    const start = startDate ? new Date(startDate) : new Date('1970-01-01');
+    const end = endDate ? new Date(endDate) : new Date();
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    return orderDate >= start && orderDate <= end;
+  });
+
+  const handleResetFilter = () => {
+    setStartDate('');
+    setEndDate('');
+  };
+
+  const totalRevenue = filteredOrders.reduce((sum, order) => {
     return order.status === 'Batal' ? sum : sum + order.totalPrice;
   }, 0);
 
-  // Hitung Jumlah Pesanan: Hanya hitung yang TIDAK batal
-  const totalOrderCount = orders.filter(order => order.status !== 'Batal').length;
+  const totalOrderCount = filteredOrders.filter(order => order.status !== 'Batal').length;
+
+  // --- STATE MOBILE MENU (BARU) ---
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // --- STATE FORM ---
   const [formData, setFormData] = useState<Product>({
@@ -326,33 +346,80 @@ export default function AdminDashboard() {
         
         {/* --- 1. TAB RINGKASAN --- */}
         {activeTab === 'recap' && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* KARTU STATISTIK */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4">
-                <div className="p-4 bg-green-100 text-green-700 rounded-full"><ClipboardList size={24}/></div>
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            
+            {/* KARTU STATISTIK (Tetap Ada) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-stone-100 flex items-center gap-4">
+                <div className="p-3 bg-green-100 text-green-700 rounded-full"><ClipboardList size={20}/></div>
                 <div>
-                  <p className="text-sm text-stone-500 font-bold">Total Pendapatan</p>
-                  <h4 className="text-2xl font-bold text-stone-800">Rp {totalRevenue.toLocaleString('id-ID')}</h4>
+                  <p className="text-xs text-stone-500 font-bold">Total Pendapatan</p>
+                  <h4 className="text-xl font-bold text-stone-800">Rp {totalRevenue.toLocaleString('id-ID')}</h4>
+                  {(startDate || endDate) && <p className="text-[10px] text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded-full inline-block mt-1">Terfilter</p>}
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4">
-                <div className="p-4 bg-orange-100 text-orange-700 rounded-full"><ShoppingCart size={24}/></div>
+
+              <div className="bg-white p-5 rounded-xl shadow-sm border border-stone-100 flex items-center gap-4">
+                <div className="p-3 bg-orange-100 text-orange-700 rounded-full"><ShoppingCart size={20}/></div>
                 <div>
-                  <p className="text-sm text-stone-500 font-bold">Total Transaksi</p>
-                  <h4 className="text-2xl font-bold text-stone-800">{totalOrderCount} Pesanan</h4>
+                  <p className="text-xs text-stone-500 font-bold">Total Transaksi</p>
+                  <h4 className="text-xl font-bold text-stone-800">{totalOrderCount} Pesanan</h4>
+                  {(startDate || endDate) && <p className="text-[10px] text-orange-600 font-semibold bg-orange-50 px-2 py-0.5 rounded-full inline-block mt-1">Terfilter</p>}
                 </div>
               </div>
             </div>
 
-            {/* TABEL RIWAYAT PENJUALAN SINGKAT */}
-            <div className="bg-white rounded-2xl shadow-xl border border-stone-100 overflow-hidden">
-              <div className="p-6 border-b border-stone-100 bg-stone-50">
-                <h3 className="font-bold text-lg text-stone-800">Riwayat Penjualan Terbaru</h3>
+            {/* TABEL RIWAYAT PENJUALAN TERBARU (Filter Pindah Kesini) */}
+            <div className="bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden">
+              
+              {/* HEADER TABEL + FILTER INTEGRATED */}
+              <div className="p-5 border-b border-stone-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-stone-50 gap-4">
+                <div>
+                  <h3 className="font-bold text-lg text-stone-800">Riwayat Penjualan Terbaru</h3>
+                  <p className="text-stone-500 text-xs mt-0.5">Ringkasan transaksi yang baru saja terjadi.</p>
+                </div>
+
+                {/* Filter Tanggal (Langsung di Header) */}
+                <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-stone-200 shadow-sm">
+                  <div className="relative group">
+                    <input 
+                      type="date" 
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="text-xs font-semibold text-stone-600 border-none outline-none focus:ring-0 bg-transparent py-1 px-1 w-28 cursor-pointer"
+                      title="Dari Tanggal"
+                    />
+                  </div>
+                  
+                  <span className="text-stone-300 font-bold">-</span>
+                  
+                  <div className="relative group">
+                    <input 
+                      type="date" 
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="text-xs font-semibold text-stone-600 border-none outline-none focus:ring-0 bg-transparent py-1 px-1 w-28 cursor-pointer"
+                      title="Sampai Tanggal"
+                    />
+                  </div>
+
+                  {/* Tombol Reset Kecil */}
+                  {(startDate || endDate) && (
+                    <button 
+                      onClick={handleResetFilter}
+                      className="ml-1 p-1.5 bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition"
+                      title="Reset Filter"
+                    >
+                      <RotateCcw size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* ISI TABEL */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-stone-100 text-stone-600 text-sm uppercase">
+                  <thead className="bg-stone-100 text-stone-600 text-xs uppercase font-bold tracking-wider">
                     <tr>
                       <th className="p-4">Tanggal</th>
                       <th className="p-4">Pelanggan</th>
@@ -362,29 +429,34 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
-                    {orders.length === 0 ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-stone-400">Belum ada data penjualan.</td></tr>
+                    {filteredOrders.length === 0 ? (
+                      <tr><td colSpan={5} className="p-8 text-center text-xs text-stone-400">Tidak ada data penjualan pada periode ini.</td></tr>
                     ) : (
-                      orders.slice(0, 5).map((order) => { // Tampilkan max 5 saja di ringkasan
+                      // Kita tampilkan maksimal 5 data saja untuk ringkasan
+                      filteredOrders.slice(0, 5).map((order) => { 
                         let itemsList = [];
                         try { itemsList = JSON.parse(order.items); } catch(e) {}
                         
                         return (
-                          <tr key={order.id} className="hover:bg-stone-50">
-                            <td className="p-4 text-sm text-stone-500">
+                          <tr key={order.id} className="hover:bg-stone-50 transition">
+                            <td className="p-4 text-xs text-stone-500 font-bold">
                               {new Date(order.date).toLocaleDateString('id-ID')}
                             </td>
-                            <td className="p-4 font-bold text-stone-800">{order.customerName}</td>
-                            <td className="p-4 text-sm text-stone-600">
+                            <td className="p-4 text-sm font-bold text-stone-800">{order.customerName}</td>
+                            <td className="p-4 text-xs text-stone-600">
                               {itemsList.map((i: any, idx:number) => (
                                 <div key={idx}>{i.name} x{i.quantity}</div>
                               ))}
                             </td>
-                            <td className="p-4 font-bold text-green-600">
+                            <td className="p-4 text-sm font-bold text-green-600">
                               Rp {order.totalPrice.toLocaleString('id-ID')}
                             </td>
                             <td className="p-4">
-                              <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold">
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                                order.status === 'Batal' ? 'bg-red-100 text-red-700' : 
+                                order.status === 'Selesai' ? 'bg-green-100 text-green-700 focus:ring-green-500' : 
+                                order.status === 'Di Kirim' ? 'bg-blue-100 text-blue-700 focus:ring-blue-500' :'bg-yellow-100 text-yellow-700'
+                              }`}>
                                 {order.status}
                               </span>
                             </td>
@@ -484,88 +556,139 @@ export default function AdminDashboard() {
 
         {/* --- 3. TAB PESANAN --- */}
         {activeTab === 'orders' && (
-          <div className="bg-white rounded-2xl shadow-xl border border-stone-100 overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
-              <div>
-                <h3 className="font-bold text-xl text-stone-800">Daftar Pesanan Masuk</h3>
-                <p className="text-stone-500 text-sm">Kelola status pesanan pelanggan di sini.</p>
-              </div>
-            </div>
+          <div className="space-y-4 animate-in fade-in zoom-in duration-300">
             
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-stone-100 text-stone-600 text-xs uppercase font-bold tracking-wider">
-                  <tr>
-                    <th className="p-4">Tanggal</th>
-                    <th className="p-4">Pelanggan</th>
-                    <th className="p-4">Item Belanja</th>
-                    <th className="p-4">Total</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {orders.map((order) => {
-                    let itemsList = [];
-                    try { itemsList = JSON.parse(order.items); } catch(e) {}
+            <div className="bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden">
+              {/* HEADER TABEL DENGAN FILTER INTEGRATED */}
+              <div className="p-5 border-b border-stone-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-stone-50 gap-4">
+                
+                {/* Judul & Deskripsi */}
+                <div>
+                  <h3 className="font-bold text-lg text-stone-800">Daftar Pesanan Masuk</h3>
+                  <p className="text-stone-500 text-xs mt-0.5">Kelola status pesanan pelanggan di sini.</p>
+                </div>
 
-                    return (
-                      <tr key={order.id} className={`hover:bg-stone-50 transition duration-150 ${order.status === 'Batal' ? 'opacity-50 bg-stone-100 grayscale' : ''}`}>
-                        <td className="p-4 text-sm text-stone-500 font-bold">
-                          {new Date(order.date).toLocaleDateString('id-ID')}
-                          <div className="text-xs text-stone-400">{new Date(order.date).toLocaleTimeString('id-ID')}</div>
-                        </td>
-                        <td className="p-4">
-                          <span className="font-bold text-stone-800">{order.customerName}</span>
-                        </td>
-                        <td className="p-4">
-                          <div className="text-sm text-stone-600 space-y-1">
-                            {itemsList.map((item: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-stone-300"></span>
-                                {item.name} <span className="text-xs font-bold text-stone-400">x{item.quantity}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="p-4 font-bold text-green-700">
-                          Rp {order.totalPrice.toLocaleString('id-ID')}
-                        </td>
-                        <td className="p-4">
-                          <select 
-                            value={order.status}
-                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                            className={`text-xs font-bold px-3 py-1.5 rounded-full border-none cursor-pointer focus:ring-2 focus:ring-offset-1 outline-none transition
-                              ${order.status === 'Selesai' ? 'bg-green-100 text-green-700 focus:ring-green-500' : 
-                                order.status === 'Dikirim' ? 'bg-blue-100 text-blue-700 focus:ring-blue-500' :
-                                order.status === 'Batal' ? 'bg-red-100 text-red-700 focus:ring-red-500' :
-                                'bg-yellow-100 text-yellow-700 focus:ring-yellow-500'
-                              }`}
-                          >
-                            <option value="Menunggu Konfirmasi">Menunggu</option>
-                            <option value="Diproses">Diproses</option>
-                            <option value="Dikirim">Dikirim</option>
-                            <option value="Selesai">Selesai</option>
-                            <option value="Batal">Batal</option>
-                          </select>
-                        </td>
-                        <td className="p-4 text-center">
-                          <button 
-                            onClick={() => handleDeleteOrder(order.id)}
-                            className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-full transition"
-                            title="Hapus Pesanan"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                {/* Filter Tanggal (Langsung di Header) */}
+                <div className="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-stone-200 shadow-sm">
+                  <div className="relative group">
+                    <input 
+                      type="date" 
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="text-xs font-semibold text-stone-600 border-none outline-none focus:ring-0 bg-transparent py-1 px-1 w-28 cursor-pointer"
+                      title="Dari Tanggal"
+                    />
+                  </div>
+                  
+                  <span className="text-stone-300 font-bold">-</span>
+                  
+                  <div className="relative group">
+                    <input 
+                      type="date" 
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="text-xs font-semibold text-stone-600 border-none outline-none focus:ring-0 bg-transparent py-1 px-1 w-28 cursor-pointer"
+                      title="Sampai Tanggal"
+                    />
+                  </div>
+
+                  {/* Tombol Reset Kecil */}
+                  {(startDate || endDate) && (
+                    <button 
+                      onClick={handleResetFilter}
+                      className="ml-1 p-1.5 bg-red-50 text-red-500 rounded-md hover:bg-red-100 transition"
+                      title="Reset Filter"
+                    >
+                      <RotateCcw size={12} />
+                    </button>
+                  )}
+                </div>
+
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-stone-100 text-stone-600 text-xs uppercase font-bold tracking-wider">
+                    <tr>
+                      <th className="p-4">Tanggal</th>
+                      <th className="p-4">Pelanggan</th>
+                      <th className="p-4">Item Belanja</th>
+                      <th className="p-4">Total</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {/* Menggunakan filteredOrders */}
+                    {filteredOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-10 text-center text-stone-400 bg-stone-50/50 text-sm">
+                          Tidak ada pesanan ditemukan pada rentang tanggal ini.
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {orders.length === 0 && (
-                <div className="p-10 text-center text-stone-400 bg-stone-50/50">Belum ada pesanan masuk.</div>
-              )}
+                    ) : (
+                      filteredOrders.map((order) => {
+                        let itemsList = [];
+                        try { itemsList = JSON.parse(order.items); } catch(e) {}
+    
+                        return (
+                          <tr key={order.id} className={`hover:bg-stone-50 transition duration-150 ${order.status === 'Batal' ? 'opacity-50 bg-stone-50 grayscale' : ''}`}>
+                            <td className="p-4 text-xs text-stone-500 font-bold">
+                              {new Date(order.date).toLocaleDateString('id-ID')}
+                              <div className="text-[10px] text-stone-400 font-normal mt-0.5">
+                                {new Date(order.date).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="font-bold text-sm text-stone-800">{order.customerName}</span>
+                            </td>
+                            <td className="p-4">
+                              <div className="text-xs text-stone-600 space-y-1">
+                                {itemsList.map((item: any, idx: number) => (
+                                  <div key={idx} className="flex items-center gap-2">
+                                    <span className="w-1 h-1 rounded-full bg-stone-300"></span>
+                                    {item.name} <span className="font-bold text-stone-400">x{item.quantity}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-4 font-bold text-sm text-green-700">
+                              Rp {order.totalPrice.toLocaleString('id-ID')}
+                            </td>
+                            <td className="p-4">
+                              <select 
+                                value={order.status}
+                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                className={`text-[10px] font-bold px-2 py-1 rounded-full border-none cursor-pointer focus:ring-1 outline-none transition
+                                  ${order.status === 'Selesai' ? 'bg-green-100 text-green-700 focus:ring-green-500' : 
+                                    order.status === 'Di Kirim' ? 'bg-blue-100 text-blue-700 focus:ring-blue-500' :
+                                    order.status === 'Batal' ? 'bg-red-100 text-red-700 focus:ring-red-500' :
+                                    'bg-yellow-100 text-yellow-700 focus:ring-yellow-500'
+                                  }`}
+                              >
+                                <option value="Menunggu Konfirmasi">Menunggu</option>
+                                <option value="Di Proses">Di Proses</option>
+                                <option value="Di Kirim">Di Kirim</option>
+                                <option value="Selesai">Selesai</option>
+                                <option value="Batal">Batal</option>
+                              </select>
+                            </td>
+                            <td className="p-4 text-center">
+                              <button 
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="p-2 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                                title="Hapus Pesanan"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
