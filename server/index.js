@@ -378,11 +378,11 @@ sequelize.sync().then(async () => {
         password: adminHash,
         role: "ADMIN" // 👑 Role Khusus Admin
       });
-      console.log("\n========================================");
+      console.log(" ");
       console.log("AKUN ADMIN BERHASIL DIBUAT OTOMATIS!");
       console.log("Username: admin");
       console.log("Password: ***REMOVED***");
-      console.log("========================================\n");
+      console.log(" ");
     } else {
       console.log("Akun admin sudah tersedia.");
     }

@@ -22,7 +22,7 @@ const HomePage = ({ navigateTo, products, addToCart }: { navigateTo: (path: stri
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-slate-900/10"></div> 
         <img src="/bannerbg.png" alt="Banner" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/10"></div>
       </div>
       <div className="container mx-auto px-6 relative z-10 text-center text-white pt-24 md:pt-16">
         <span className="inline-block py-1 px-3 rounded-full bg-green-500/20 border border-green-400/50 text-green-100 text-sm font-semibold tracking-wider mb-6 backdrop-blur-sm animate-in slide-in-from-bottom-4 duration-700">

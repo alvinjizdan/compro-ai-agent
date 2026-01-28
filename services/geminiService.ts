@@ -4,28 +4,18 @@ import * as XLSX from 'xlsx';
 const API_KEY = "AIzaSyBwUweUP7ktEFcTxh8E5gnQk_Oe5q_KIQ0"; 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// BACA DATABASE EXCEL
 const loadExcelDatabase = async () => {
   try {
-    // Mencari file di folder 'public'
-    const response = await fetch('/database_produk.xlsx');
     
-    // Cek jika file tidak ditemukan
+    const response = await fetch('/database_produk.xlsx');
+
     if (!response.ok) throw new Error("File Excel tidak ketemu");
 
     const arrayBuffer = await response.arrayBuffer();
-
-    // 2. Baca buffer menjadi Workbook
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    
-    // 3. Ambil Sheet pertama
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-
-    // 4. Konversi ke JSON (Array of Objects)
     const jsonData = XLSX.utils.sheet_to_json(sheet);
-    
-    // 5. Ubah jadi String rapi untuk dibaca AI
     return JSON.stringify(jsonData, null, 2);
   } catch (error) {
     console.error("Gagal baca database Excel:", error);
@@ -33,24 +23,16 @@ const loadExcelDatabase = async () => {
   }
 };
 
-// CHATBOT UTAMA
 export const getGeminiResponse = async (history: any[], message: string, webProducts: any[]) => {
   try {
-    // Gunakan model terbaru
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    // A. PRIORITAS DATA: Coba baca Excel dulu
     let productsContext = await loadExcelDatabase();
-
-    // B. CADANGAN: Jika Excel gagal/kosong, pakai data dari Website (webProducts)
     if (!productsContext) {
       console.warn("Menggunakan data website (Excel tidak ditemukan/gagal).");
       productsContext = (webProducts || []).map((p: any) => 
         `- ${p.name}: Rp ${p.price?.toLocaleString('id-ID') || '0'} (${p.category || '-'})`
       ).join("\n");
     }
-
-    // C. FILTER HISTORY (PENTING: Agar tidak Error Role)
     const sanitizedHistory = history
       .map(msg => {
         let textContent = "";
@@ -64,12 +46,9 @@ export const getGeminiResponse = async (history: any[], message: string, webProd
         };
       })
       .filter((msg, index) => {
-        // Hapus sapaan awal bot
         if (index === 0 && msg.role === 'model') return false; 
         return true;
       });
-
-    // D. MULAI CHAT
     const chat = model.startChat({
       history: sanitizedHistory,
       generationConfig: { maxOutputTokens: 500 },
@@ -96,7 +75,7 @@ export const getGeminiResponse = async (history: any[], message: string, webProd
     return response.text();
 
   } catch (error: any) {
-    console.error("❌ Error Gemini:", error);
+    console.error("Error Gemini:", error);
     return "Maaf, sedang ada gangguan koneksi database. Mohon coba lagi.";
   }
 };

@@ -52,11 +52,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ products }) => {
 
   return (
     <div className="fixed bottom-6 right-6 z-[60] font-sans flex flex-col items-end gap-4">
-      
-      {/* ==============================================
-          BAGIAN 1: JENDELA CHAT
-          Perbaikan: Tidak pakai 'hidden', tapi pakai pointer-events
-         ============================================== */}
       <div 
         className={`
           w-[350px] h-[550px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col
