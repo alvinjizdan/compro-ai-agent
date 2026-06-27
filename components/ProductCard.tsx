@@ -3,13 +3,13 @@ import { ShoppingCart } from 'lucide-react';
 
 // Pastikan tipe datanya menerima jumlah (quantity)
 interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   image: string;
   category: string;
-  description: string;
-  stock: number;
+  description?: string;
+  stock?: number;
   satuan?: string; // Opsional (default: kg)
 }
 
@@ -57,7 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       </div>
 
       {/* Konten Produk */}
-      <div className="p-5 flex flex-col flex-grow">
+      <div className="p-3 md:p-5 flex flex-col flex-grow">
         <div className="mb-4">
           <span className="text-xs font-bold text-black tracking-wider uppercase bg-slate-200 px-2 py-1 rounded">
             {product.category}
@@ -77,8 +77,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           </div>
 
           {/* 🔥 BAGIAN INPUT MANUAL (KG/TON) 🔥 */}
-          <div className="flex gap-2">
-            <div className="relative w-1/3">
+          <div className="flex flex-col xl:flex-row gap-2">
+            <div className="relative w-full xl:w-1/3">
               <input 
                  type="number" 
                  min="1"

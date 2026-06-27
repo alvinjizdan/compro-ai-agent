@@ -1,8 +1,15 @@
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { sequelize, User, Product } = require('./database');
+const KnowledgeBase = require('./models/KnowledgeBase');
+
 
 const seedDatabase = async () => {
   try {
+    const mongoUri = process.env.MONGO_URI || 'mongodb://mongo_db:27017/radhika_pos_db';
+    await mongoose.connect(mongoUri);
+    
+    await KnowledgeBase.deleteMany({});
     // 1. Reset Database (Hapus data lama biar gak dobel saat ditest ulang)
     await sequelize.sync({ force: true });
     console.log('🗑️ Database lama bersihkan...');

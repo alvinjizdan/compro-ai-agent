@@ -15,7 +15,7 @@ export default function ResetPassword() {
 
     try {
       // Kirim password baru + token ke backend
-      await axios.post(`http://localhost:5000/api/reset-password/${token}`, { newPassword: password });
+      await axios.post(`/api/reset-password/${token}`, { newPassword: password });
       alert("Sukses! Password berhasil diubah. Silakan Login dengan password baru.");
       navigate('/login');
     } catch (error: any) {

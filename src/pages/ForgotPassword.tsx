@@ -16,7 +16,7 @@ export default function ForgotPassword() {
 
     try {
       // Kirim username ke backend untuk dicek emailnya
-      const res = await axios.post('http://localhost:5000/api/forgot-password', { username });
+      const res = await axios.post('/api/forgot-password', { username });
       setMessage(res.data.message); // Tampilkan pesan sukses dari server
     } catch (error: any) {
       console.error(error);

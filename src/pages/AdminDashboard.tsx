@@ -5,6 +5,7 @@ import {
   LogOut, Package, Plus, Trash2, ClipboardList, 
   ShoppingCart, Users, Menu, X, Save, Edit, Calendar, Filter, RotateCcw, Loader2
 } from 'lucide-react';
+import AdminChatbot from '../../components/AdminChatbot';
 
 // Tipe Data
 interface Product {
@@ -86,7 +87,7 @@ export default function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users');
+      const res = await axios.get('/api/users');
       setUsers(res.data);
     } catch (error) {
       console.error("Gagal ambil user");
@@ -96,7 +97,7 @@ export default function AdminDashboard() {
   // GANTI ROLE USER
   const handleRoleChange = async (userId: number, newRole: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/users/${userId}/role`, { role: newRole });
+      await axios.put(`/api/users/${userId}/role`, { role: newRole });
       fetchUsers(); // Refresh tabel
       alert(`Role berhasil diubah menjadi ${newRole}`);
     } catch (error) {
@@ -114,7 +115,7 @@ export default function AdminDashboard() {
 
     if (window.confirm(`Yakin ingin menghapus user ${usernameTarget}?`)) {
       try {
-        await axios.delete(`http://localhost:5000/api/users/${userId}`);
+        await axios.delete(`/api/users/${userId}`);
         fetchUsers();
       } catch (error) {
         alert("Gagal menghapus user");
@@ -124,7 +125,7 @@ export default function AdminDashboard() {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/orders');
+      const response = await axios.get('/api/orders');
       setOrders(response.data);
     } catch (error) {
       console.error("Gagal ambil data order", error);
@@ -133,7 +134,7 @@ export default function AdminDashboard() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/products');
+      const response = await axios.get('/api/products');
       setProducts(response.data);
       setLoading(false);
     } catch (error) {
@@ -161,7 +162,7 @@ export default function AdminDashboard() {
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/orders/${orderId}`, { status: newStatus });
+      await axios.put(`/api/orders/${orderId}`, { status: newStatus });
       fetchOrders(); 
     } catch (error) {
       alert("Gagal mengubah status.");
@@ -171,7 +172,7 @@ export default function AdminDashboard() {
   const handleDeleteOrder = async (orderId: number) => {
     if (window.confirm("Yakin ingin menghapus riwayat pesanan ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/orders/${orderId}`);
+        await axios.delete(`/api/orders/${orderId}`);
         fetchOrders(); 
       } catch (error) {
         alert("Gagal menghapus pesanan.");
@@ -210,12 +211,12 @@ export default function AdminDashboard() {
 
     try {
       if (isEditing && formData.id) {
-        await axios.put(`http://localhost:5000/api/products/${formData.id}`, data, {
+        await axios.put(`/api/products/${formData.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' } 
         });
         alert("Produk berhasil diperbarui!");
       } else {
-        await axios.post('http://localhost:5000/api/products', data, {
+        await axios.post('/api/products', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         alert("Produk baru berhasil ditambahkan!");
@@ -228,10 +229,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Yakin ingin menghapus produk ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${id}`);
+        await axios.delete(`/api/products/${id}`);
         alert("Produk dihapus.");
         fetchProducts();
       } catch (error) {
@@ -421,6 +422,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-left">
                   <thead className="bg-stone-100 text-stone-600 text-xs uppercase font-bold tracking-wider">
                     <tr>
+                      <th className="p-4">Kode Pesanan</th>
                       <th className="p-4">Tanggal</th>
                       <th className="p-4">Pelanggan</th>
                       <th className="p-4">Detail Barang</th>
@@ -430,15 +432,21 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {filteredOrders.length === 0 ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-xs text-stone-400">Tidak ada data penjualan pada periode ini.</td></tr>
+                      <tr><td colSpan={6} className="p-8 text-center text-xs text-stone-400">Tidak ada data penjualan pada periode ini.</td></tr>
                     ) : (
                       // Kita tampilkan maksimal 5 data saja untuk ringkasan
                       filteredOrders.slice(0, 5).map((order) => { 
                         let itemsList = [];
                         try { itemsList = JSON.parse(order.items); } catch(e) {}
+                        const orderIndex = orders.findIndex(o => o.id === order.id);
+                        const kodeAngka = orders.length - orderIndex;
+                        const kodePesanan = `RND-${String(kodeAngka).padStart(3, '0')}`;
                         
                         return (
                           <tr key={order.id} className="hover:bg-stone-50 transition">
+                            <td className="p-4">
+                              <span className="font-bold text-xs text-green-800 bg-green-100 px-2 py-1 rounded border border-green-200">{kodePesanan}</span>
+                            </td>
                             <td className="p-4 text-xs text-stone-500 font-bold">
                               {new Date(order.date).toLocaleDateString('id-ID')}
                             </td>
@@ -610,6 +618,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-left">
                   <thead className="bg-stone-100 text-stone-600 text-xs uppercase font-bold tracking-wider">
                     <tr>
+                      <th className="p-4">Kode Pesanan</th>
                       <th className="p-4">Tanggal</th>
                       <th className="p-4">Pelanggan</th>
                       <th className="p-4">Item Belanja</th>
@@ -622,7 +631,7 @@ export default function AdminDashboard() {
                     {/* Menggunakan filteredOrders */}
                     {filteredOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-10 text-center text-stone-400 bg-stone-50/50 text-sm">
+                        <td colSpan={7} className="p-10 text-center text-stone-400 bg-stone-50/50 text-sm">
                           Tidak ada pesanan ditemukan pada rentang tanggal ini.
                         </td>
                       </tr>
@@ -631,8 +640,15 @@ export default function AdminDashboard() {
                         let itemsList = [];
                         try { itemsList = JSON.parse(order.items); } catch(e) {}
     
+                        const orderIndex = orders.findIndex(o => o.id === order.id);
+                        const kodeAngka = orders.length - orderIndex;
+                        const kodePesanan = `RND-${String(kodeAngka).padStart(3, '0')}`;
+
                         return (
                           <tr key={order.id} className={`hover:bg-stone-50 transition duration-150 ${order.status === 'Batal' ? 'opacity-50 bg-stone-50 grayscale' : ''}`}>
+                            <td className="p-4">
+                              <span className="font-bold text-xs text-green-800 bg-green-100 px-2 py-1 rounded border border-green-200">{kodePesanan}</span>
+                            </td>
                             <td className="p-4 text-xs text-stone-500 font-bold">
                               {new Date(order.date).toLocaleDateString('id-ID')}
                               <div className="text-[10px] text-stone-400 font-normal mt-0.5">
@@ -842,6 +858,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* --- CHATBOT ADMIN (FLOATING WIDGET) --- */}
+      <AdminChatbot onActionSuccess={() => { fetchProducts(); fetchOrders(); }} />
     </div>
   );
 }

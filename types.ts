@@ -1,9 +1,12 @@
 export interface Product {
-  id: number;
+  id: string;
   name: string;
-  category: 'Bahan Baku' | 'Kopra' | 'Kelapa Utuh';
   price: number;
   image: string;
+  category: string;
+  description?: string;
+  stock?: number;
+  satuan?: string;
 }
 
 export interface CartItem extends Product {

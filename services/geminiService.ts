@@ -1,81 +1,33 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import * as XLSX from 'xlsx';
-
-const API_KEY = "AIzaSyBwUweUP7ktEFcTxh8E5gnQk_Oe5q_KIQ0"; 
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-const loadExcelDatabase = async () => {
-  try {
-    
-    const response = await fetch('/database_produk.xlsx');
-
-    if (!response.ok) throw new Error("File Excel tidak ketemu");
-
-    const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(sheet);
-    return JSON.stringify(jsonData, null, 2);
-  } catch (error) {
-    console.error("Gagal baca database Excel:", error);
-    return ""; 
-  }
-};
-
 export const getGeminiResponse = async (history: any[], message: string, webProducts: any[]) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    let productsContext = await loadExcelDatabase();
-    if (!productsContext) {
-      console.warn("Menggunakan data website (Excel tidak ditemukan/gagal).");
-      productsContext = (webProducts || []).map((p: any) => 
-        `- ${p.name}: Rp ${p.price?.toLocaleString('id-ID') || '0'} (${p.category || '-'})`
-      ).join("\n");
-    }
-    const sanitizedHistory = history
-      .map(msg => {
-        let textContent = "";
-        if (typeof msg.parts === 'string') textContent = msg.parts;
-        else if (Array.isArray(msg.parts)) textContent = msg.parts[0]?.text || "";
-        else if (msg.parts?.text) textContent = msg.parts.text;
-
-        return {
-          role: msg.role,
-          parts: [{ text: textContent }] 
-        };
-      })
-      .filter((msg, index) => {
-        if (index === 0 && msg.role === 'model') return false; 
-        return true;
-      });
-    const chat = model.startChat({
-      history: sanitizedHistory,
-      generationConfig: { maxOutputTokens: 500 },
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // KUNCI UTAMA: Kirim pesan DAN data produk asli dari website
+      body: JSON.stringify({ 
+        message: message, 
+        products: webProducts 
+      }) 
     });
 
-    const systemPrompt = `
-      Kamu bernama udin, kamu adalah Customer Service (CS) Ramah dari PT Radhika Narya Daruna.
-      Tugasmu menjawab pertanyaan pelanggan berdasarkan DATA BASE PRODUK di bawah ini.
-
-      [SUMBER DATA UTAMA]
-      ${productsContext}
-
-      ATURAN PENTING:
-    1. HANYA jawab berdasarkan data di atas. Jangan mengarang harga/stok sendiri.
-    2. Jika Stok tertulis "Habis" atau "Kosong", katakan maaf dan tawarkan produk lain yang "Ada".
-    3. Jika user bertanya hal di luar produk (misal: "Siapa Presiden Indonesia?"), jawab sopan bahwa kamu hanya melayani konsultasi kopra.
-    4. PENTING: JANGAN gunakan format Markdown seperti tanda bintang (** atau *). Gunakan teks biasa saja.
-    5. PENTING: Jika user salah ketik (typo) atau menggunakan singkatan (misal: "hrg kpra brp?", "klapa cngkil"), kamu HARUS cerdas menebak maksudnya ke produk yang paling relevan di data.
-    6. Jangan pernah mengoreksi ejaan user secara kaku (misal: "Maksud anda Kelapa?"), langsung saja jawab pertanyaannya seolah-olah ejaannya benar.
-    `;
-
-    const result = await chat.sendMessage(`${systemPrompt}\n\nUser: ${message}`);
-    const response = await result.response;
-    return response.text();
+    if (!response.ok) throw new Error("Gagal terhubung ke server backend");
+    
+    const data = await response.json();
+    
+    // PERUBAHAN: Kembalikan seluruh objek (data), BUKAN cuma data.reply
+    // Agar komponen React bisa membaca data.reply dan data.productId
+    return data; 
 
   } catch (error: any) {
-    console.error("Error Gemini:", error);
-    return "Maaf, sedang ada gangguan koneksi database. Mohon coba lagi.";
+    console.error("Error Chatbot Lokal:", error);
+    
+    // PERUBAHAN: Samakan format kembalian saat error agar aplikasi tidak crash
+    return {
+      reply: "Maaf, sistem layanan pelanggan sedang dalam perbaikan (Server Offline).",
+      productIds: [],
+      score: 0
+    };
   }
 };

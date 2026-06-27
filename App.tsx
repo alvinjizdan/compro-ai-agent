@@ -227,20 +227,28 @@ const AppContent: React.FC = () => {
 
   
   // ✅ STATE UNTUK DATA DATABASE (PENGGANTI MOCK DATA)
-  const [products, setProducts] = useState<Product[]>([]);
+const [products, setProducts] = useState<Product[]>([]);
 
-  // ✅ FETCH DATA DARI DATABASE SAAT WEBSITE DIBUKA
+const handleAddToCart = (p: Product, q: number) => {
+  // logika keranjang Anda di sini
+}
+
+  // ✅ FETCH DATA DARI DATABASE SAAT HALAMAN BERUBAH
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/products');
+        const response = await axios.get('/api/products');
         setProducts(response.data);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
-    fetchProducts();
-  }, []);
+    
+    // Refresh data produk setiap kali membuka halaman utama atau menu
+    if (location.pathname === '/' || location.pathname === '/menu') {
+      fetchProducts();
+    }
+  }, [location.pathname]);
 
   // Login States
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -290,11 +298,11 @@ const AppContent: React.FC = () => {
     setIsCartOpen(true);
   };
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = (id: string, delta: number) => {
     setCart((prev) => prev.map((item) => item.id === id ? { ...item, quantity: item.quantity + delta } : item).filter((item) => item.quantity > 0));
   };
 
-  const removeFromCart = (id: number) => setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (id: string) => setCart((prev) => prev.filter((item) => item.id !== id));
 
   const handleCheckout = async () => {
     // 1. Cek Login
@@ -319,7 +327,7 @@ const AppContent: React.FC = () => {
     // --- PROSES SIMPAN KE DATABASE (REKAP ADMIN) ---
     try {
       // Kita pakai 'await' agar WA baru terbuka SETELAH data tersimpan
-      await axios.post('http://localhost:5000/api/orders', {
+      await axios.post('/api/orders', {
         customerName: username,   // Nama User yang sedang login
         items: cart,              // Daftar belanjaan
         totalPrice: totalPayment  // Total bayar
@@ -403,7 +411,7 @@ const AppContent: React.FC = () => {
               
               {/* 1. LOGO */}
               <button onClick={() => navigate('/')} className="flex items-center gap-2 group -ml-5">
-                <img 
+                 <img 
                   src="/logobulet.png" 
                   alt="Logo" 
                   className="h-10 w-auto object-contain group-hover:rotate-3 transition-transform" 
@@ -624,6 +632,7 @@ const AppContent: React.FC = () => {
                           <button onClick={() => updateQuantity(item.id, -1)} className="p-1 bg-slate-100 rounded"><Minus size={14}/></button>
                           <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
                           <button onClick={() => updateQuantity(item.id, 1)} className="p-1 bg-slate-100 rounded"><Plus size={14}/></button>
+                          <span className="text-sm font-semibold text-slate-500 ml-1">KG</span>
                           <button onClick={() => removeFromCart(item.id)} className="ml-auto text-red-500"><Trash2 size={16}/></button>
                        </div>
                     </div>
@@ -644,8 +653,28 @@ const AppContent: React.FC = () => {
         </>
       )}
 
-      {!isAdminPage && (
-        <ChatBot products={products} />
+      {!isAdminPage && !isLoginPage && (
+        <ChatBot 
+  products={products} 
+  onAddToCart={(idProduk) => {
+    console.log("1. Chatbot mengirim ID:", idProduk);
+    
+    // TAMBAHKAN BARIS INI UNTUK MENGINTIP ISI DATABASE ANDA:
+    console.log("Isi Katalog Produk:", products); 
+
+    // Kita coba antisipasi jika nama atributnya '_id' (biasanya di MongoDB)
+    const produkPilihan = products.find((p) => String(p.id) === String(idProduk));
+
+    console.log("2. Hasil pencarian produk:", produkPilihan);
+
+    if (produkPilihan) {
+      addToCart(produkPilihan, 1); 
+      console.log("3. SUKSES! Fungsi addToCart dijalankan.");
+    } else {
+      console.error("GAGAL: Produk tidak ditemukan.");
+    }
+  }} 
+/>
       )}
     </div>
   );
