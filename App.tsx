@@ -333,13 +333,11 @@ const handleAddToCart = (p: Product, q: number) => {
         totalPrice: totalPayment  // Total bayar
       });
       
-      // Opsional: Console log untuk memastikan sukses
+      // Console log untuk memastikan sukses
       console.log("Data berhasil disimpan ke Rekap Admin");
 
     } catch (error) {
       console.error("Gagal menyimpan ke database:", error);
-      // Pilihan: Mau tetap lanjut ke WA meski database error?
-      // Jika ya, biarkan saja. Jika tidak, return di sini.
       alert("Terjadi kesalahan sistem, namun Anda tetap akan diarahkan ke WhatsApp.");
     }
 
@@ -655,26 +653,15 @@ const handleAddToCart = (p: Product, q: number) => {
 
       {!isAdminPage && !isLoginPage && (
         <ChatBot 
-  products={products} 
-  onAddToCart={(idProduk) => {
-    console.log("1. Chatbot mengirim ID:", idProduk);
-    
-    // TAMBAHKAN BARIS INI UNTUK MENGINTIP ISI DATABASE ANDA:
-    console.log("Isi Katalog Produk:", products); 
-
-    // Kita coba antisipasi jika nama atributnya '_id' (biasanya di MongoDB)
-    const produkPilihan = products.find((p) => String(p.id) === String(idProduk));
-
-    console.log("2. Hasil pencarian produk:", produkPilihan);
-
-    if (produkPilihan) {
-      addToCart(produkPilihan, 1); 
-      console.log("3. SUKSES! Fungsi addToCart dijalankan.");
-    } else {
-      console.error("GAGAL: Produk tidak ditemukan.");
-    }
-  }} 
-/>
+          products={products} 
+          onAddToCart={(idProduk) => {
+            const produkPilihan = products.find((p) => String(p.id) === String(idProduk));
+            
+            if (produkPilihan) {
+              addToCart(produkPilihan, 1); 
+            }
+          }} 
+        />
       )}
     </div>
   );

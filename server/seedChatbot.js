@@ -17,10 +17,13 @@ const seedData = [
   }
 ];
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 const seedChatbotDB = async () => {
   try {
-    // Pastikan URL database ini sama dengan yang ada di index.js Anda
-    await mongoose.connect('mongodb://127.0.0.1:27017/radhika_pos_db');
+    const mongoURI = process.env.MONGO_URI || 'mongodb://mongo_db:27017/radhika_pos_db';
+    await mongoose.connect(mongoURI);
     
     // Hapus data lama dan masukkan data baru
     await KnowledgeBase.deleteMany({});

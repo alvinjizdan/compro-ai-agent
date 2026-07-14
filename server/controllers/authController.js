@@ -50,6 +50,25 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.adminLogin = async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan" });
+
+    if (user.role !== 'ADMIN') return res.status(403).json({ error: "Akses ditolak. Bukan Admin." });
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) return res.status(401).json({ error: "Password salah" });
+
+    const token = jwt.sign({ id: user._id, role: user.role }, SECRET_KEY, { expiresIn: '12h' });
+    
+    res.json({ message: "Login Admin sukses", token, role: user.role, username: user.username });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
   try {
     const { username } = req.body;

@@ -11,11 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ==========================================
 // 1. DATA BASIS PENGETAHUAN (KNOWLEDGE BASE)
-// Data FAQ sekarang sepenuhnya dinamis diambil dari MongoDB
-// ==========================================
-
-// (Fungsi matematika manual telah diganti menggunakan library natural dan compute-cosine-similarity)
-
+// Data FAQ diambil dari MongoDB
 // ==========================================
 // 5. FUNGSI UTAMA (ENDPOINT API)
 // ==========================================
@@ -26,13 +22,13 @@ const processChatMessage = async (req, res) => {
 
         console.log(`\n[+] Pesan masuk: "${message}"`);
 
-        // 1. Susun Katalog
-        let KatalogProduk = "Data produk sedang kosong.";
+        // 1. Susun Katalog & Kata Kunci
+        let katalogWebsite = "Data produk sedang kosong.";
         let kataKunciProduk = ""; 
         
         if (products && products.length > 0) {
-            KatalogProduk = products.map(p => 
-                `- ${p.name}: Rp ${p.price?.toLocaleString('id-ID')}`
+            katalogWebsite = products.map(p => 
+                `- ID: ${p.id} | ${p.name}: Rp ${p.price?.toLocaleString('id-ID')}`
             ).join('\n');
             
             kataKunciProduk = products.map(p => p.name.toLowerCase()).join(" ");
@@ -41,7 +37,7 @@ const processChatMessage = async (req, res) => {
         // 2. Ambil FAQ Mongoose
         const knowledgeBase = await KnowledgeBase.find();
         
-        // 3. BUAT FAQ BAYANGAN (Pastikan baris ini ada)
+        // 3. BUAT FAQ BAYANGAN (Untuk mengenali pertanyaan produk)
         let dynamicKB = [...knowledgeBase];
         dynamicKB.push({
             question: `ada produk apa saja saja jual katalog daftar barang list menu ${kataKunciProduk}`,
@@ -125,15 +121,7 @@ const processChatMessage = async (req, res) => {
             });
         }
 
-        let katalogWebsite = "Data produk sedang kosong.";
-if (products && products.length > 0) {
-    // Memetakan array produk menjadi teks yang mudah dibaca Gemini
-    katalogWebsite = products.map(p => 
-        `- ID: ${p.id} | ${p.name}: Rp ${p.price}`
-    ).join('\n');
-}
-
-// 2. MODIFIKASI PROMPT GEMINI (PROMPT ENGINEERING)
+// 6. MODIFIKASI PROMPT GEMINI
 const prompt = `
 Kamu adalah Udin, Customer Service dari PT Radhika Narya Daruna.
 
@@ -142,9 +130,6 @@ ${katalogWebsite}
 
 [JAWABAN SISTEM / FAQ]
 ${bestMatch.answer}
-
-[KATALOG PRODUK ASLI DARI WEBSITE]
-${KatalogProduk}
 
 Pengguna bertanya: "${message}"
 
@@ -159,10 +144,9 @@ ATURAN MUTLAK:
 
 try {
     // 1. INISIALISASI GEMINI
-    // Definisikan 'model' yang akan digunakan
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
-    // 2. PANGGIL API GEMINI (Ini kode yang lama)
+    // 2. PANGGIL API GEMINI
     const result = await model.generateContent(prompt);
     let geminiReply = result.response.text();
 

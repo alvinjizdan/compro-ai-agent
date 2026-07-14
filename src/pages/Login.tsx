@@ -82,12 +82,12 @@ export default function Login() {
           <div>
             <label className="block text-sm font-bold text-stone-700 mb-1">Username</label>
             <div className="relative">
-              <User className="absolute left-3 top-3 text-stone-400 pointer-events-none" size={18} />
+              <User className="absolute left-3 top-3.5 text-stone-400 pointer-events-none" size={18} />
               <input 
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition relative z-50 text-stone-900 bg-white"
+                className="w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-transparent relative z-20"
                 placeholder="Masukkan username"
                 autoComplete="off"
                 required
@@ -99,12 +99,12 @@ export default function Login() {
   <div>
     <label className="block text-sm font-bold text-stone-700 mb-1">Email</label>
     <div className="relative">
-      <Mail className="absolute left-3 top-3 text-stone-400 pointer-events-none" size={18} />
+      <Mail className="absolute left-3 top-3.5 text-stone-400 pointer-events-none" size={18} />
       <input 
         type="email" 
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition relative z-50 text-stone-900 bg-white"
+        className="w-full pl-10 pr-4 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-transparent relative z-20"
         placeholder="nama@email.com"
         required
       />
@@ -117,7 +117,7 @@ export default function Login() {
   <label className="block text-sm font-bold text-stone-700 mb-1">Password</label>
   <div className="relative">
     {/* Ikon Gembok (Kiri) */}
-    <Lock className="absolute left-3 top-3 text-stone-400 pointer-events-none" size={18} />
+    <Lock className="absolute left-3 top-3.5 text-stone-400 pointer-events-none" size={18} />
     
     <input 
       // 👇 1. Tipe berubah sesuai state
@@ -125,7 +125,7 @@ export default function Login() {
       value={password}
       onChange={(e) => setPassword(e.target.value)}
       // 👇 2. Tambah 'pr-10' agar teks tidak tertutup tombol mata
-      className="w-full pl-10 pr-10 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition relative z-50 text-stone-900 bg-white"
+      className="w-full pl-10 pr-10 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-transparent relative z-20"
       placeholder="Masukkan password"
       autoComplete="off"
       required
@@ -135,7 +135,7 @@ export default function Login() {
     <button
       type="button" // Wajib type="button" agar tidak submit form
       onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-3 top-4 text-stone-400 hover:text-orange-600 transition cursor-pointer"
+      className="absolute right-3 top-3.5 text-stone-400 hover:text-orange-600 transition cursor-pointer z-30"
       title={showPassword ? "Sembunyikan Password" : "Lihat Password"}
     >
       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
