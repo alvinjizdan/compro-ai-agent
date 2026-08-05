@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { MessageSquare, X, Send, Loader2, Bot, User, Settings } from 'lucide-react';
+import { Headset, X, Send, Loader2, Bot, User, Settings } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'model';
@@ -177,7 +177,7 @@ const AdminChatbot: React.FC<AdminChatbotProps> = ({ onActionSuccess }) => {
           ${isOpen ? 'bg-stone-800 text-white rotate-90' : 'bg-gradient-to-r from-green-800 to-green-800 text-white hover:shadow-green-500/30'}
         `}
       >
-        {isOpen ? <X size={24} className="-rotate-90 transition-transform" /> : <MessageSquare size={24} />}
+        {isOpen ? <X size={24} className="-rotate-90 transition-transform" /> : <Headset size={24} />}
       </button>
     </div>
   );
