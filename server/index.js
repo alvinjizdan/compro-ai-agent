@@ -41,27 +41,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 
-// ==========================================
-// 4. SERVER START & ADMIN CHECK
-// ==========================================
-const createAdminAccount = async () => {
-    try {
-        const adminExists = await User.findOne({ username: 'admin' });
-        if (!adminExists) {
-            await User.create({
-                username: 'admin',
-                email: 'admin@toko.com',
-                password: '***REMOVED***', 
-                role: 'ADMIN'
-            });
-            console.log("✅ Admin Created: admin / ***REMOVED***");
-        }
-    } catch (error) {
-        console.error("Gagal buat admin:", error.message);
-    }
-};
-
-app.listen(PORT, async () => {
-  await createAdminAccount();
+app.listen(PORT, () => {
   console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
 });
