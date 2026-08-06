@@ -5,10 +5,10 @@ import { Search, ShoppingCart, Trash2, Plus, Minus, Sparkles, X, MapPin, Phone, 
 import { Product, CartItem, ReceiptData } from './types';
 import ChatBot from './components/Chatbot';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import Login from './src/pages/Login';
-import ForgotPassword from './src/pages/ForgotPassword';
-import ResetPassword from './src/pages/ResetPassword';
-import AdminDashboard from './src/pages/AdminDashboard';
+import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Kategori Tetap Statis
 const CATEGORIES = ["Semua", "Bahan Baku", "Kopra", "Kelapa Utuh"];

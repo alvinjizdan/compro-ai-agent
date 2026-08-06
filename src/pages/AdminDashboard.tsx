@@ -5,7 +5,7 @@ import {
   LogOut, Package, Plus, Trash2, ClipboardList, 
   ShoppingCart, Users, Menu, X, Save, Edit, Calendar, Filter, RotateCcw, Loader2
 } from 'lucide-react';
-import AdminChatbot from '../../components/AdminChatbot';
+import AdminChatbot from '../components/AdminChatbot';
 
 // Tipe Data
 interface Product {
