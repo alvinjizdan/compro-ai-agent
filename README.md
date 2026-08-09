@@ -105,7 +105,7 @@ The system implements defense-in-depth strategies and strict AI guardrails:
 ## Project Structure
 
 ```
-nusantara-pos/
+compro-ai-agent/
 ├── .env.example
 ├── package.json               # Root workspace/Vite configuration
 ├── vite.config.ts             # Bundler configuration
@@ -138,14 +138,12 @@ The backend requires environment variables to run. Refer to `.env.example`:
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
 
-*(Never expose your actual `.env` file or commit secrets to version control).*
-
 ## Installation & Local Development
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd nusantara-pos
+   cd compro-ai-agent
    ```
 
 2. **Install Frontend Dependencies**
