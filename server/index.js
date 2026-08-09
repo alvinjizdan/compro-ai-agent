@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 
 const { processChatMessage } = require('./controllers/chatbotController');
+const { aiLimiter } = require('./middleware/rateLimitMiddleware');
 
 // Routes
 const adminRoutes = require('./routes/adminRoutes');
@@ -34,7 +35,7 @@ connectDB();
 // ==========================================
 // 3. ROUTER
 // ==========================================
-app.post('/api/chat', processChatMessage);
+app.post('/api/chat', aiLimiter, processChatMessage);
 app.use('/api/admin', adminRoutes);
 app.use('/api/', authRoutes); // /register, /login, /forgot-password, /reset-password
 app.use('/api/products', productRoutes);
