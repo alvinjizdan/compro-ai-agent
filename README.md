@@ -1,20 +1,210 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Web-Based Company Profile with Integrated POS System and AI Agent
 
-# Run and deploy your AI Studio app
+## Short Description
+Web-Based integrated Company Profile and Point of Sale (POS) system. It seamlessly combines business representation, product catalog management, and transaction processing with intelligent, AI-powered customer and administrative assistants.
 
-This contains everything you need to run your app locally.
+## Overview
+The primary goal of this project is to provide a cohesive ecosystem that unifies three core components:
+1. **Company Profile**: Serves as the digital storefront, presenting business information, product catalogs, and branding through a responsive and modern web interface.
+2. **Point of Sale (POS)**: Handles the core commerce operations, including product management, order processing, and transaction management.
+3. **AI Agent**: Elevates the user experience and administrative efficiency by embedding intelligent interaction. It acts as a smart assistant for customers exploring products and as a data-querying copilot for administrators managing orders.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1flZoY3LmeARmTpQm1_mGtd1gNtv4cO2O
+## Key Features
 
-## Run Locally
+### Company Profile
+- Business and company information representation
+- Dynamic product and catalog presentation
+- Responsive, modern web interface
 
-**Prerequisites:**  Node.js
+### Point of Sale
+- Comprehensive product management (CRUD operations)
+- Order and checkout processing
+- Transaction history and management
+- Role-based admin management
 
+### AI Agent
+- **Customer AI Assistant**: Provides real-time, context-aware product recommendations.
+- **Product-Aware Responses**: Dynamically retrieves catalog data to ensure the AI only suggests available products.
+- **Admin AI Assistant**: Enables natural language order search.
+- **Function Calling**: Empowers the admin AI to translate natural language into structured database search parameters.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## AI Agent Architecture
+
+The AI integration goes beyond simple text generation, implementing a multi-layered, secure retrieval architecture:
+
+### Customer AI Flow
+1. **User Query**: The customer submits a message.
+2. **Input Validation**: The query is sanitized and length-restricted to prevent abuse.
+3. **TF-IDF & Cosine Similarity (Gatekeeper)**: The system calculates the relevance of the query against the product catalog. This acts as a strict gatekeeper to filter out off-topic chats before hitting the paid LLM API.
+4. **Product Retrieval**: Relevant products are retrieved directly from MongoDB as the single source of truth.
+5. **Gemini API**: The validated query and context are sent to Google Gemini.
+6. **Structured JSON Output**: Gemini is enforced to return a strict JSON schema containing the reply, relevance score, and recommended product IDs.
+7. **Product ID Validation**: The IDs returned by the AI are not blindly trusted. They are validated through Mongoose `ObjectId` checks and verified against the database.
+8. **Frontend**: The sanitized response and valid products are sent back to the customer UI.
+
+## Admin AI Agent
+The administrative AI operates under a highly privileged, tightly controlled pipeline:
+
+`Admin Request` → `JWT Authentication` → `Role Authorization (ADMIN)` → `AI Agent` → `Function Calling (searchOrder)` → `MongoDB Query` → `Structured Result`
+
+The AI acts strictly as an intent parser. It determines the search parameters based on the admin's natural language request, but the backend Node.js server retains absolute control over executing the database query and fetching the actual records.
+
+## Tech Stack
+
+### Frontend
+- React 19
+- React Router DOM
+- Vite
+- Tailwind CSS / Lucide React
+
+### Backend
+- Node.js
+- Express.js 5.x
+
+### Database
+- MongoDB
+- Mongoose ODM
+
+### AI / NLP
+- Google Gemini (`@google/generative-ai`)
+- Natural (`natural`)
+- Cosine Similarity (`compute-cosine-similarity`)
+
+### Authentication
+- JSON Web Tokens (JWT)
+
+### Security / Infrastructure
+- Bcrypt.js (Password Hashing)
+- Express Rate Limit
+- CORS
+
+## Security & AI Guardrails
+
+The system implements defense-in-depth strategies and strict AI guardrails:
+- **Authentication**: Stateless JWT authentication with expiration.
+- **Authorization**: Explicit role-based access control (RBAC) middleware for admin routes.
+- **Password Hashing**: Bcrypt with 10 salt rounds.
+- **Input Validation**: Character length limits (max 500 chars), trimming, and regex escaping on chat inputs.
+- **NoSQL Injection Protection**: Inputs are sanitized before interacting with the Mongoose driver.
+- **AI Output Validation**: Product IDs generated by Gemini undergo strict Mongoose schema validation.
+- **Rate Limiting**: `express-rate-limit` deployed on AI endpoints (30 requests / 15 minutes / IP) to prevent billing exhaustion and DoS attacks.
+- **Secret Handling**: The Gemini API key is strictly managed server-side. Frontend secret exposure vulnerabilities have been explicitly remediated.
+
+## API Overview
+
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| POST | `/api/chat` | Public | Customer AI Chatbot interaction |
+| POST | `/api/admin/chat` | Admin | Admin AI Assistant interaction |
+| POST | `/api/login` | Public | Admin Authentication |
+| GET | `/api/products` | Public | Retrieve product catalog |
+| POST/PUT/DELETE | `/api/products` | Admin | Inventory management |
+| POST | `/api/orders` | Public | Process checkout/orders |
+| GET/PUT/DELETE | `/api/orders` | Admin | Manage transaction history |
+
+## Project Structure
+
+```
+nusantara-pos/
+├── .env.example
+├── package.json               # Root workspace/Vite configuration
+├── vite.config.ts             # Bundler configuration
+├── src/                       # React Frontend source
+└── server/
+    ├── package.json           # Backend dependencies
+    ├── index.js               # Application entry point & router mount
+    ├── config/
+    │   └── db.js              # MongoDB connection
+    ├── middleware/
+    │   ├── authMiddleware.js      # JWT & Role validation
+    │   └── rateLimitMiddleware.js # API Rate Limiting
+    ├── controllers/
+    │   ├── authController.js
+    │   ├── chatbotController.js   # Customer NLP & AI Controller
+    │   └── adminChatController.js # Admin Function Calling Controller
+    ├── models/
+    │   └── User, Product, Order
+    └── routes/
+        └── api routing modules
+```
+
+## Environment Configuration
+The backend requires environment variables to run. Refer to `.env.example`:
+- `MONGO_URI`
+- `PORT`
+- `SECRET_KEY`
+- `GEMINI_API_KEY`
+- `ADMIN_USERNAME`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+
+*(Never expose your actual `.env` file or commit secrets to version control).*
+
+## Installation & Local Development
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd nusantara-pos
+   ```
+
+2. **Install Frontend Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Install Backend Dependencies**
+   ```bash
+   cd server
+   npm install
+   ```
+
+4. **Configure Environment**
+   Copy the example environment file and fill in your secure credentials:
+   ```bash
+   cp .env.example .env
+   ```
+
+5. **Run the Backend**
+   ```bash
+   # Inside the /server directory
+   npm start
+   ```
+
+6. **Run the Frontend (Development)**
+   ```bash
+   # Inside the root directory
+   npm run dev
+   ```
+
+7. **Production Build**
+   ```bash
+   npm run build
+   ```
+
+## Testing & Validation
+The following verifications have been successfully validated against the current implementation:
+- **Dependency Audit**: `npm audit` returns 0 vulnerabilities across frontend and backend.
+- **Frontend Build**: Vite successfully compiles production assets without exposing backend `.env` variables.
+- **Backend Startup**: Express server mounts and connects to MongoDB flawlessly.
+- **AI Rate Limit Test**: Exhaustive testing verifies that the 31st consecutive request to AI endpoints yields an HTTP 429 response.
+- **Secret Exposure Scan**: Static analysis confirms no `GEMINI_API_KEY` traces in the `/dist` or `/src` directories.
+
+## Architecture Highlights
+This project serves as a technical showcase for several advanced concepts:
+- **AI Agent Integration**: Embedding LLMs not just as chat interfaces, but as core components for data retrieval and user assistance.
+- **TF-IDF + Cosine Similarity Gatekeeper**: A custom NLP middleware that intercepts requests, saving computational costs by blocking irrelevant queries before they reach paid APIs.
+- **Gemini Structured Output**: Forcing non-deterministic LLMs to output deterministic, strongly-typed JSON contracts for reliable frontend consumption.
+- **Function Calling for Admin AI**: Abstracting MongoDB query construction behind a natural language intent parser.
+- **AI Output Validation**: Demonstrating zero-trust architecture by verifying AI-generated identifiers against the database schema.
+- **Secure Architecture**: Implementation of JWT RBAC, API Rate Limiting, and strict Server-Side Secret Management.
+
+## Current Limitations / Future Improvements
+While robust, the current architecture has areas for future enhancement:
+- **Distributed Rate Limiting**: The current rate limiter is memory-bound. Scaling horizontally across multiple Node.js instances would require a Redis-backed store.
+- **HTTP Security Headers**: Implementation of `helmet` for strict Content Security Policies and XSS mitigation.
+- **Production Deployment Hardening**: Transitioning from standard Node execution to PM2 or containerized orchestration (Docker/Kubernetes).
+- **Automated Test Suite**: Expanding current manual/scripted regression checks into a fully automated Jest/Mocha test suite.
+
+## Portfolio Context
+This project was developed as a portfolio and academic demonstration of modern full-stack web development. It illustrates the practical integration of Artificial Intelligence (LLMs & NLP) within a traditional e-commerce / POS ecosystem, highlighting a strong emphasis on security, cost-optimization, and architectural best practices.
