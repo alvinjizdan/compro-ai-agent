@@ -52,14 +52,14 @@ The AI acts strictly as an intent parser. It determines the search parameters ba
 ## Tech Stack
 
 ### Frontend
-- React 19
+- React
 - React Router DOM
 - Vite
 - Tailwind CSS / Lucide React
 
 ### Backend
 - Node.js
-- Express.js 5.x
+- Express.js
 
 ### Database
 - MongoDB
