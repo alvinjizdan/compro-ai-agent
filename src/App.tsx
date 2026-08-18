@@ -238,7 +238,11 @@ const handleAddToCart = (p: Product, q: number) => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get('/api/products');
-        setProducts(response.data);
+        if (Array.isArray(response.data)) {
+          setProducts(response.data);
+        } else {
+          console.error("API did not return an array:", response.data);
+        }
       } catch (error) {
         console.error("Error fetching products:", error);
       }
